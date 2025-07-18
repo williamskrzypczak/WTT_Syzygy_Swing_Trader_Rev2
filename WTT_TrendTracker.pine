@@ -19,10 +19,11 @@ indicator("WTT_TrendTracker", overlay=true)
 // R1.11 - Stop Loss: Added red dashed stop loss lines with "SL" labels
 // R1.12 - Colors: Vibrant lime/fuchsia scheme + enhanced R:R table with opposite levels
 // R1.13 - Colors: Updated to vibrant lime/deep pink RGB scheme for maximum impact
+// R1.14 - Bug Fix: Resolved NaN values in risk-reward calculations with proper error handling
 //
 // =============================================================================
 
-// R1.13 - Vibrant lime and deep pink RGB color scheme
+// R1.14 - Fixed NaN values in risk-reward calculations
 
 // Input parameters
 lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
@@ -151,13 +152,19 @@ if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
         stop_loss := most_recent_high  // Use swing high as natural stop
         take_profit := most_recent_high + (most_recent_high - most_recent_low) * 1.5  // Target above the high
         risk_amount := entry_price - stop_loss
-        risk_reward_ratio := (take_profit - entry_price) / risk_amount
+        
+        // Only calculate R:R ratio if risk_amount is valid and not zero
+        if risk_amount > 0
+            risk_reward_ratio := (take_profit - entry_price) / risk_amount
+        else
+            risk_reward_ratio := na
+            
         trade_signal := "LONG"
         signal_color := color.green
         
         // Calculate position size
         dollar_risk = account_size * (risk_per_trade / 100)
-        position_size := dollar_risk / risk_amount
+        position_size := risk_amount > 0 ? dollar_risk / risk_amount : na
         
     // Short setup: Price breaks below swing low (breakdown)
     else if current_price < most_recent_low
@@ -165,13 +172,19 @@ if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
         stop_loss := most_recent_low  // Use swing low as natural stop
         take_profit := most_recent_low - (most_recent_high - most_recent_low) * 1.5  // Target below the low
         risk_amount := stop_loss - entry_price
-        risk_reward_ratio := (entry_price - take_profit) / risk_amount
+        
+        // Only calculate R:R ratio if risk_amount is valid and not zero
+        if risk_amount > 0
+            risk_reward_ratio := (entry_price - take_profit) / risk_amount
+        else
+            risk_reward_ratio := na
+            
         trade_signal := "SHORT"
         signal_color := color.red
         
         // Calculate position size
         dollar_risk = account_size * (risk_per_trade / 100)
-        position_size := dollar_risk / risk_amount
+        position_size := risk_amount > 0 ? dollar_risk / risk_amount : na
         
     else
         // No valid setup
@@ -314,21 +327,21 @@ if show_risk_reward and not na(last_take_profit)
         table.cell(rr_table, 1, 1, last_trade_signal, text_color=last_trade_signal == "LONG" ? color.lime : color.rgb(255, 20, 147))
         
         table.cell(rr_table, 0, 2, "R:R Ratio", text_color=color.white)
-        table.cell(rr_table, 1, 2, str.tostring(risk_reward_ratio, "#.##"), 
-                   text_color=risk_reward_ratio >= 2.0 ? color.green : color.red)
+        table.cell(rr_table, 1, 2, not na(risk_reward_ratio) and risk_reward_ratio > 0 ? str.tostring(risk_reward_ratio, "#.##") : "na", 
+                   text_color=not na(risk_reward_ratio) and risk_reward_ratio >= 2.0 ? color.green : color.red)
         
         // Calculate R:R ratio with opposite breakout as stop loss
         float opposite_rr = na
         if last_trade_signal == "LONG" and not na(most_recent_low)
             opposite_risk = entry_price - most_recent_low
-            opposite_rr := (take_profit - entry_price) / opposite_risk
+            opposite_rr := opposite_risk > 0 ? (take_profit - entry_price) / opposite_risk : na
         else if last_trade_signal == "SHORT" and not na(most_recent_high)
             opposite_risk = most_recent_high - entry_price
-            opposite_rr := (entry_price - take_profit) / opposite_risk
+            opposite_rr := opposite_risk > 0 ? (entry_price - take_profit) / opposite_risk : na
         
         table.cell(rr_table, 0, 3, "Opposite R:R", text_color=color.white)
-        table.cell(rr_table, 1, 3, str.tostring(opposite_rr, "#.##"), 
-                   text_color=opposite_rr >= 2.0 ? color.green : color.red)
+        table.cell(rr_table, 1, 3, not na(opposite_rr) and opposite_rr > 0 ? str.tostring(opposite_rr, "#.##") : "na", 
+                   text_color=not na(opposite_rr) and opposite_rr >= 2.0 ? color.green : color.red)
 
 // Breakout Alert Conditions
 // Alert when swing high line changes from teal to green (bullish breakout)

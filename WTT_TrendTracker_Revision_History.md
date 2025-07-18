@@ -97,7 +97,15 @@
 - **Complete Consistency**: Same RGB deep pink across all bearish elements
 - **Enhanced Visibility**: All signals stand out brilliantly against chart background
 
-## Current Features (R1.13)
+## R1.14 - NaN Bug Fix and Error Handling
+- **Division by Zero Prevention**: Added proper checks before risk-reward calculations
+- **Invalid Value Handling**: Shows "na" instead of "NaN" for invalid calculations
+- **Robust Logic**: Handles edge cases when swing points are too close together
+- **Clean Table Display**: Professional appearance without error values
+- **Enhanced Position Sizing**: Safe calculations for position size recommendations
+- **Complete Error Prevention**: All risk-reward calculations now fail gracefully
+
+## Current Features (R1.14)
 
 ### Core Functionality
 - **Swing Point Detection**: 7-bar lookback period
