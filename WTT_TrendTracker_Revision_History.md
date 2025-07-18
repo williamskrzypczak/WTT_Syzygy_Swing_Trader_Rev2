@@ -65,7 +65,15 @@
 - **Professional Appearance**: Clean visual with single label per profit target
 - **Clear Identification**: Easy to distinguish profit targets from other chart elements
 
-## Current Features (R1.9)
+## R1.10 - Synchronized Breakout Alerts
+- **Visual-Audio Sync**: Alerts trigger exactly when line colors change
+- **Bullish Breakout Alert**: Triggers when swing high line changes teal→green
+- **Bearish Breakdown Alert**: Triggers when swing low line changes gray→red
+- **Real-time Notifications**: Alerts fire on the same bar as color changes
+- **Perfect Timing**: No delay between visual signal and alert notification
+- **Clean Messages**: Clear "BULLISH BREAKOUT" and "BEARISH BREAKDOWN" alerts
+
+## Current Features (R1.10)
 
 ### Core Functionality
 - **Swing Point Detection**: 7-bar lookback period

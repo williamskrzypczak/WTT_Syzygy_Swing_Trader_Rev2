@@ -15,10 +15,11 @@ indicator("WTT_TrendTracker", overlay=true)
 // R1.7 - Targets: Persistent profit target lines until next breakout
 // R1.8 - Universal: Long/short setups work in all trend directions
 // R1.9 - Labels: Added "PT" labels to profit target lines (current line only)
+// R1.10 - Alerts: Synchronized breakout alerts with line color changes
 //
 // =============================================================================
 
-// R1.9 - Added PT labels to profit target lines
+// R1.10 - Synchronized breakout alerts with visual color changes
 
 // Input parameters
 lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
@@ -258,15 +259,16 @@ if show_risk_reward and show_stop_targets and na(entry_price) and not na(last_ta
         // Update the existing line to extend forward
         line.set_xy2(profit_target_line, bar_index + 50, last_take_profit)
 
-// Risk Management Alerts
-if show_risk_reward and not na(trade_signal) and risk_reward_ratio >= min_rr_ratio
-    // Alert for high-quality setups
-    if risk_reward_ratio >= 3.0
-        alert(trade_signal + " Setup - High R:R Ratio: " + str.tostring(risk_reward_ratio, "#.##"), alert.freq_once_per_bar)
-    
-    // Alert for position sizing
-    if position_size > 0
-        alert(trade_signal + " Position Size: " + str.tostring(position_size, "#.##") + " units", alert.freq_once_per_bar)
+// Breakout Alert Conditions
+// Alert when swing high line changes from teal to green (bullish breakout)
+if not na(swing_high) and show_labels
+    if high_breached and not high_breached[1]
+        alert("BULLISH BREAKOUT - Price closed above swing high", alert.freq_once_per_bar)
+
+// Alert when swing low line changes from gray to red (bearish breakdown)
+if not na(swing_low) and show_labels
+    if low_breached and not low_breached[1]
+        alert("BEARISH BREAKDOWN - Price closed below swing low", alert.freq_once_per_bar)
 
 
 
