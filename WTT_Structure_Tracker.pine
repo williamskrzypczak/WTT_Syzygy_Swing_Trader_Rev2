@@ -1,8 +1,8 @@
 //@version=5
-indicator("WTT_TrendTracker", overlay=true)
+indicator("WTT_Structure_Tracker", overlay=true)
 
 // =============================================================================
-// WTT_TrendTracker - Revision History
+// WTT_Structure_Tracker - Revision History
 // =============================================================================
 //
 // R1.0 - Initial: Basic swing detection, trend analysis, horizontal lines

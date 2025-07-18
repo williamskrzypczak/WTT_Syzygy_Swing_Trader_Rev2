@@ -1,4 +1,4 @@
-# WTT_TrendTracker - Revision History
+# WTT_Structure_Tracker - Revision History
 
 ## R1.0 - Initial Version
 - Basic swing high/low detection with trend analysis
