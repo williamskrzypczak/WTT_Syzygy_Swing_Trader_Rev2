@@ -1,0 +1,272 @@
+//@version=5
+indicator("WTT_TrendTracker", overlay=true)
+
+// =============================================================================
+// WTT_TrendTracker - Revision History
+// =============================================================================
+//
+// R1.0 - Initial: Basic swing detection, trend analysis, horizontal lines
+// R1.1 - Colors: Teal/maroon scheme, visual consistency
+// R1.2 - Table: Added trend status table (removed in R1.3)
+// R1.3 - Cleanup: Removed table, simplified interface
+// R1.4 - Optimization: 7-bar lookback for 15min charts
+// R1.5 - Breakouts: Dynamic color changes (teal→green, gray→red)
+// R1.6 - Risk Management: Account size, position sizing, R:R ratios, natural stops
+// R1.7 - Targets: Persistent profit target lines until next breakout
+// R1.8 - Universal: Long/short setups work in all trend directions
+// R1.9 - Labels: Added "PT" labels to profit target lines (current line only)
+//
+// =============================================================================
+
+// R1.9 - Added PT labels to profit target lines
+
+// Input parameters
+lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
+show_labels = input.bool(true, "Show Labels")
+label_size = input.string("small", "Label Size", options=["tiny", "small", "normal", "large"])
+show_trend_lines = input.bool(true, "Show Trend Lines")
+
+// Risk-Reward Optimization Inputs
+show_risk_reward = input.bool(true, "Show Risk-Reward Analysis")
+risk_per_trade = input.float(1.0, "Risk Per Trade (%)", minval=0.1, maxval=10.0, step=0.1)
+account_size = input.float(10000, "Account Size ($)", minval=1000, maxval=1000000)
+min_rr_ratio = input.float(2.0, "Minimum R:R Ratio", minval=1.0, maxval=10.0, step=0.1)
+atr_multiplier = input.float(2.0, "ATR Multiplier for Stops", minval=0.5, maxval=5.0, step=0.1)
+show_position_sizing = input.bool(true, "Show Position Sizing")
+show_stop_targets = input.bool(true, "Show Stop Loss & Take Profit")
+
+// Variables to store swing points
+var float swing_high = na
+var float swing_low = na
+var int swing_high_bar = na
+var int swing_low_bar = na
+
+// Variables to store the most recent swing points (these will persist)
+var float most_recent_high = na
+var float most_recent_low = na
+
+// Arrays to store historical swing points
+var array<float> swing_highs = array.new<float>()
+var array<float> swing_lows = array.new<float>()
+var array<int> swing_high_bars = array.new<int>()
+var array<int> swing_low_bars = array.new<int>()
+
+// Variables to track horizontal lines
+var line high_line = na
+var line low_line = na
+
+// Variables to track labels
+var label high_label = na
+var label low_label = na
+
+// Variables to track breakout states
+var bool high_breached = false
+var bool low_breached = false
+
+// Risk-Reward Optimization Variables
+var float entry_price = na
+var float stop_loss = na
+var float take_profit = na
+var float risk_amount = na
+var float position_size = na
+var float risk_reward_ratio = na
+var string trade_signal = na
+var color signal_color = color.gray
+
+// Variables to track persistent profit target lines
+var line profit_target_line = na
+var float last_take_profit = na
+var string last_trade_signal = na
+var label pt_label = na
+
+// ATR for dynamic stop loss calculation
+atr = ta.atr(14)
+
+// Detect swing high
+is_swing_high = ta.pivothigh(high, lookback, lookback)
+if not na(is_swing_high)
+    swing_high := is_swing_high
+    swing_high_bar := bar_index - lookback
+    most_recent_high := is_swing_high  // Update the most recent high
+    array.push(swing_highs, swing_high)
+    array.push(swing_high_bars, swing_high_bar)
+    
+    // Keep only last 5 swing highs
+    if array.size(swing_highs) > 5
+        array.shift(swing_highs)
+        array.shift(swing_high_bars)
+
+// Detect swing low
+is_swing_low = ta.pivotlow(low, lookback, lookback)
+if not na(is_swing_low)
+    swing_low := is_swing_low
+    swing_low_bar := bar_index - lookback
+    most_recent_low := is_swing_low  // Update the most recent low
+    array.push(swing_lows, swing_low)
+    array.push(swing_low_bars, swing_low_bar)
+    
+    // Keep only last 5 swing lows
+    if array.size(swing_lows) > 5
+        array.shift(swing_lows)
+        array.shift(swing_low_bars)
+
+// Analyze patterns
+var string trend_status = "Sideways"
+var color trend_color = color.gray
+
+// Check for higher highs and higher lows (uptrend)
+if array.size(swing_highs) >= 2 and array.size(swing_lows) >= 2
+    last_high = array.get(swing_highs, array.size(swing_highs) - 1)
+    prev_high = array.get(swing_highs, array.size(swing_highs) - 2)
+    last_low = array.get(swing_lows, array.size(swing_lows) - 1)
+    prev_low = array.get(swing_lows, array.size(swing_lows) - 2)
+    
+    if last_high > prev_high and last_low > prev_low
+        trend_status := "↗️"
+        trend_color := color.green
+    else if last_high < prev_high and last_low < prev_low
+        trend_status := "↘️"
+        trend_color := color.red
+    else
+        trend_status := "↔️"
+        trend_color := color.gray
+
+// Risk-Reward Optimization Logic
+if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
+    // Calculate potential entry points
+    current_price = close
+    
+    // Long setup: Price breaks above swing high (breakout)
+    if current_price > most_recent_high
+        entry_price := current_price
+        stop_loss := most_recent_high  // Use swing high as natural stop
+        take_profit := most_recent_high + (most_recent_high - most_recent_low) * 1.5  // Target above the high
+        risk_amount := entry_price - stop_loss
+        risk_reward_ratio := (take_profit - entry_price) / risk_amount
+        trade_signal := "LONG"
+        signal_color := color.green
+        
+        // Calculate position size
+        dollar_risk = account_size * (risk_per_trade / 100)
+        position_size := dollar_risk / risk_amount
+        
+    // Short setup: Price breaks below swing low (breakdown)
+    else if current_price < most_recent_low
+        entry_price := current_price
+        stop_loss := most_recent_low  // Use swing low as natural stop
+        take_profit := most_recent_low - (most_recent_high - most_recent_low) * 1.5  // Target below the low
+        risk_amount := stop_loss - entry_price
+        risk_reward_ratio := (entry_price - take_profit) / risk_amount
+        trade_signal := "SHORT"
+        signal_color := color.red
+        
+        // Calculate position size
+        dollar_risk = account_size * (risk_per_trade / 100)
+        position_size := dollar_risk / risk_amount
+        
+    else
+        // No valid setup
+        entry_price := na
+        stop_loss := na
+        take_profit := na
+        risk_amount := na
+        position_size := na
+        risk_reward_ratio := na
+        trade_signal := na
+        signal_color := color.gray
+
+
+
+// Create horizontal lines with labels for swing points
+if not na(swing_high) and show_labels
+    line.delete(high_line)
+    // Change color if price has closed above the line
+    high_breached := close > swing_high
+    line_color = high_breached ? color.green : color.teal
+    high_line := line.new(swing_high_bar, swing_high, bar_index + 50, swing_high, 
+                         color=line_color, width=2, style=line.style_solid)
+    label.delete(high_label)
+    high_label := label.new(bar_index + 5, swing_high, trend_status, 
+                           color=line_color, 
+                           style=label.style_label_left, 
+                           textcolor=color.white, 
+                           size=size.large)
+
+if not na(swing_low) and show_labels
+    line.delete(low_line)
+    // Change color if price has closed below the line
+    low_breached := close < swing_low
+    line_color = low_breached ? color.red : color.gray
+    low_line := line.new(swing_low_bar, swing_low, bar_index + 50, swing_low,color=line_color, width=2, style=line.style_solid)
+    label.delete(low_label)
+    low_label := label.new(bar_index + 5, swing_low, trend_status, 
+                          color=line_color, 
+                          style=label.style_label_left, 
+                          textcolor=color.white, 
+                          size=size.large)
+
+// Draw trend lines
+if show_trend_lines and array.size(swing_highs) >= 2 and array.size(swing_lows) >= 2
+    // High trend line
+    high1_bar = array.get(swing_high_bars, array.size(swing_high_bars) - 2)
+    high1_price = array.get(swing_highs, array.size(swing_highs) - 2)
+    high2_bar = array.get(swing_high_bars, array.size(swing_high_bars) - 1)
+    high2_price = array.get(swing_highs, array.size(swing_highs) - 1)
+    
+    line.new(high1_bar, high1_price, high2_bar, high2_price, 
+             color=color.teal, width=2)
+    
+    // Low trend line
+    low1_bar = array.get(swing_low_bars, array.size(swing_low_bars) - 2)
+    low1_price = array.get(swing_lows, array.size(swing_lows) - 2)
+    low2_bar = array.get(swing_low_bars, array.size(swing_low_bars) - 1)
+    low2_price = array.get(swing_lows, array.size(swing_lows) - 1)
+    
+    line.new(low1_bar, low1_price, low2_bar, low2_price, 
+             color=color.gray, width=2)
+
+// Plot Risk-Reward Analysis
+if show_risk_reward and not na(entry_price) and not na(stop_loss) and not na(take_profit)
+    // Plot take profit level only
+    if show_stop_targets
+        // Delete previous profit target line if it exists
+        line.delete(profit_target_line)
+        
+        // Create new persistent profit target line
+        profit_target_line := line.new(bar_index - 10, take_profit, bar_index + 50, take_profit, 
+                                      color=color.green, width=2, style=line.style_dashed)
+        
+        // Add "PT" label to the profit target line
+        label.delete(pt_label)
+        pt_label := label.new(bar_index + 55, take_profit, "PT", 
+                  color=color.green, 
+                  style=label.style_label_left, 
+                  textcolor=color.white, 
+                  size=size.small)
+        
+        // Store the current take profit and signal for persistence
+        last_take_profit := take_profit
+        last_trade_signal := trade_signal
+
+// Show persistent profit target line if no new setup but we have a previous one
+if show_risk_reward and show_stop_targets and na(entry_price) and not na(last_take_profit)
+    // Keep the profit target line visible
+    if na(profit_target_line)
+        profit_target_line := line.new(bar_index - 10, last_take_profit, bar_index + 50, last_take_profit, 
+                                      color=color.green, width=2, style=line.style_dashed)
+    else
+        // Update the existing line to extend forward
+        line.set_xy2(profit_target_line, bar_index + 50, last_take_profit)
+
+// Risk Management Alerts
+if show_risk_reward and not na(trade_signal) and risk_reward_ratio >= min_rr_ratio
+    // Alert for high-quality setups
+    if risk_reward_ratio >= 3.0
+        alert(trade_signal + " Setup - High R:R Ratio: " + str.tostring(risk_reward_ratio, "#.##"), alert.freq_once_per_bar)
+    
+    // Alert for position sizing
+    if position_size > 0
+        alert(trade_signal + " Position Size: " + str.tostring(position_size, "#.##") + " units", alert.freq_once_per_bar)
+
+
+
