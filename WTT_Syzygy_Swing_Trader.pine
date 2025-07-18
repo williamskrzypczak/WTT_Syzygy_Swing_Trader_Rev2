@@ -1,8 +1,8 @@
 //@version=5
-indicator("WTT_Structure_Tracker", overlay=true)
+indicator("WTT_Syzygy_Swing_Trader", overlay=true)
 
 // =============================================================================
-// WTT_Structure_Tracker - Revision History
+// WTT_Syzygy_Swing_Trader - Revision History
 // =============================================================================
 //
 // R1.0 - Initial: Basic swing detection, trend analysis, horizontal lines

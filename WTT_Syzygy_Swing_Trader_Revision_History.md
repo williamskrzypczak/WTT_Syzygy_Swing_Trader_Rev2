@@ -1,4 +1,4 @@
-# WTT_Structure_Tracker - Revision History
+# WTT_Syzygy_Swing_Trader - Revision History
 
 ## R1.0 - Initial Version
 - Basic swing high/low detection with trend analysis
