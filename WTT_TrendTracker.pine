@@ -17,10 +17,11 @@ indicator("WTT_TrendTracker", overlay=true)
 // R1.9 - Labels: Added "PT" labels to profit target lines (current line only)
 // R1.10 - Alerts: Synchronized breakout alerts with line color changes
 // R1.11 - Stop Loss: Added red dashed stop loss lines with "SL" labels
+// R1.12 - Colors: Vibrant lime/fuchsia scheme + enhanced R:R table with opposite levels
 //
 // =============================================================================
 
-// R1.11 - Added stop loss lines with SL labels for complete trading setup
+// R1.12 - Vibrant color scheme and enhanced risk-reward analysis
 
 // Input parameters
 lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
@@ -189,7 +190,7 @@ if not na(swing_high) and show_labels
     line.delete(high_line)
     // Change color if price has closed above the line
     high_breached := close > swing_high
-    line_color = high_breached ? color.green : color.teal
+    line_color = high_breached ? color.lime : color.teal
     high_line := line.new(swing_high_bar, swing_high, bar_index + 50, swing_high, 
                          color=line_color, width=2, style=line.style_solid)
     label.delete(high_label)
@@ -203,7 +204,7 @@ if not na(swing_low) and show_labels
     line.delete(low_line)
     // Change color if price has closed below the line
     low_breached := close < swing_low
-    line_color = low_breached ? color.red : color.gray
+    line_color = low_breached ? color.fuchsia : color.gray
     low_line := line.new(swing_low_bar, swing_low, bar_index + 50, swing_low,color=line_color, width=2, style=line.style_solid)
     label.delete(low_label)
     low_label := label.new(bar_index + 5, swing_low, trend_status, 
@@ -241,15 +242,15 @@ if show_risk_reward and not na(entry_price) and not na(stop_loss) and not na(tak
         
         // Create new persistent profit target line
         profit_target_line := line.new(bar_index - 10, take_profit, bar_index + 50, take_profit, 
-                                      color=color.green, width=2, style=line.style_dashed)
+                                      color=color.lime, width=2, style=line.style_dashed)
         
         // Add "PT" label to the profit target line
         label.delete(pt_label)
         pt_label := label.new(bar_index + 55, take_profit, "PT", 
-                  color=color.green, 
-                  style=label.style_label_left, 
-                  textcolor=color.white, 
-                  size=size.small)
+                             color=color.lime, 
+                             style=label.style_label_left, 
+                             textcolor=color.white, 
+                             size=size.small)
         
         // Store the current take profit and signal for persistence
         last_take_profit := take_profit
@@ -261,12 +262,12 @@ if show_risk_reward and not na(entry_price) and not na(stop_loss) and not na(tak
         // Create stop loss line
         line.delete(stop_loss_line)
         stop_loss_line := line.new(bar_index - 10, stop_loss, bar_index + 50, stop_loss, 
-                                  color=color.red, width=2, style=line.style_dashed)
+                                  color=color.fuchsia, width=2, style=line.style_dashed)
         
         // Add "SL" label to the stop loss line
         label.delete(sl_label)
         sl_label := label.new(bar_index + 55, stop_loss, "SL", 
-                             color=color.red, 
+                             color=color.fuchsia, 
                              style=label.style_label_left, 
                              textcolor=color.white, 
                              size=size.small)
@@ -287,7 +288,7 @@ if show_risk_reward and show_stop_targets and na(entry_price) and not na(last_ta
         // Keep the profit target line visible
         if na(profit_target_line)
             profit_target_line := line.new(bar_index - 10, last_take_profit, bar_index + 50, last_take_profit, 
-                                          color=color.green, width=2, style=line.style_dashed)
+                                          color=color.lime, width=2, style=line.style_dashed)
         else
             // Update the existing line to extend forward
             line.set_xy2(profit_target_line, bar_index + 50, last_take_profit)
@@ -295,25 +296,38 @@ if show_risk_reward and show_stop_targets and na(entry_price) and not na(last_ta
         // Keep the stop loss line visible
         if na(stop_loss_line) and not na(last_stop_loss)
             stop_loss_line := line.new(bar_index - 10, last_stop_loss, bar_index + 50, last_stop_loss, 
-                                      color=color.red, width=2, style=line.style_dashed)
+                                      color=color.fuchsia, width=2, style=line.style_dashed)
         else if not na(stop_loss_line)
             // Update the existing stop loss line to extend forward
             line.set_xy2(stop_loss_line, bar_index + 50, last_stop_loss)
 
 // Risk-Reward Ratio Table
 if show_risk_reward and not na(last_take_profit)
-    var table rr_table = table.new(position.top_right, 2, 3, bgcolor=color.black, border_width=1)
+    var table rr_table = table.new(position.top_right, 2, 4, bgcolor=color.black, border_width=1)
     
     if barstate.islast
         table.cell(rr_table, 0, 0, "Risk-Reward", text_color=color.white, bgcolor=color.blue)
         table.cell(rr_table, 1, 0, "", text_color=color.white, bgcolor=color.blue)
         
         table.cell(rr_table, 0, 1, "Signal", text_color=color.white)
-        table.cell(rr_table, 1, 1, last_trade_signal, text_color=last_trade_signal == "LONG" ? color.green : color.red)
+        table.cell(rr_table, 1, 1, last_trade_signal, text_color=last_trade_signal == "LONG" ? color.lime : color.fuchsia)
         
         table.cell(rr_table, 0, 2, "R:R Ratio", text_color=color.white)
         table.cell(rr_table, 1, 2, str.tostring(risk_reward_ratio, "#.##"), 
                    text_color=risk_reward_ratio >= 2.0 ? color.green : color.red)
+        
+        // Calculate R:R ratio with opposite breakout as stop loss
+        float opposite_rr = na
+        if last_trade_signal == "LONG" and not na(most_recent_low)
+            opposite_risk = entry_price - most_recent_low
+            opposite_rr := (take_profit - entry_price) / opposite_risk
+        else if last_trade_signal == "SHORT" and not na(most_recent_high)
+            opposite_risk = most_recent_high - entry_price
+            opposite_rr := (entry_price - take_profit) / opposite_risk
+        
+        table.cell(rr_table, 0, 3, "Opposite R:R", text_color=color.white)
+        table.cell(rr_table, 1, 3, str.tostring(opposite_rr, "#.##"), 
+                   text_color=opposite_rr >= 2.0 ? color.green : color.red)
 
 // Breakout Alert Conditions
 // Alert when swing high line changes from teal to green (bullish breakout)

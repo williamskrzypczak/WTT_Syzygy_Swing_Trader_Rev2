@@ -81,7 +81,15 @@
 - **Professional Risk Management**: Visual stop loss placement using market structure
 - **Automatic Removal**: Stop loss lines disappear when profit target is hit
 
-## Current Features (R1.11)
+## R1.12 - Vibrant Color Scheme and Enhanced Analysis
+- **Vibrant Colors**: Updated to lime green and fuchsia for maximum visual impact
+- **Color Consistency**: Same vibrant colors across all elements (breakouts, lines, table)
+- **Enhanced R:R Table**: Added "Opposite R:R" row showing ratio with opposite breakout as stop
+- **Professional Appearance**: Cohesive, eye-catching color scheme throughout
+- **Better Visibility**: All signals and elements stand out clearly
+- **Complete Analysis**: Compare current vs. opposite stop loss risk-reward ratios
+
+## Current Features (R1.12)
 
 ### Core Functionality
 - **Swing Point Detection**: 7-bar lookback period
