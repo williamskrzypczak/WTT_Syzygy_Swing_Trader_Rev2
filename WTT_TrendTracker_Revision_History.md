@@ -73,7 +73,15 @@
 - **Perfect Timing**: No delay between visual signal and alert notification
 - **Clean Messages**: Clear "BULLISH BREAKOUT" and "BEARISH BREAKDOWN" alerts
 
-## Current Features (R1.10)
+## R1.11 - Stop Loss Lines and Labels
+- **Stop Loss Lines**: Red dashed lines showing where to place stops
+- **SL Labels**: Clear "SL" identification for stop loss levels
+- **Opposite Breakout Levels**: Stops placed at the breakout line (natural support/resistance)
+- **Complete Trading Setup**: Entry, stop loss, and profit target all visually marked
+- **Professional Risk Management**: Visual stop loss placement using market structure
+- **Automatic Removal**: Stop loss lines disappear when profit target is hit
+
+## Current Features (R1.11)
 
 ### Core Functionality
 - **Swing Point Detection**: 7-bar lookback period

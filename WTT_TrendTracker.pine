@@ -16,10 +16,11 @@ indicator("WTT_TrendTracker", overlay=true)
 // R1.8 - Universal: Long/short setups work in all trend directions
 // R1.9 - Labels: Added "PT" labels to profit target lines (current line only)
 // R1.10 - Alerts: Synchronized breakout alerts with line color changes
+// R1.11 - Stop Loss: Added red dashed stop loss lines with "SL" labels
 //
 // =============================================================================
 
-// R1.10 - Synchronized breakout alerts with visual color changes
+// R1.11 - Added stop loss lines with SL labels for complete trading setup
 
 // Input parameters
 lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
@@ -79,6 +80,11 @@ var line profit_target_line = na
 var float last_take_profit = na
 var string last_trade_signal = na
 var label pt_label = na
+
+// Variables to track persistent stop loss lines
+var line stop_loss_line = na
+var float last_stop_loss = na
+var label sl_label = na
 
 // ATR for dynamic stop loss calculation
 atr = ta.atr(14)
@@ -248,16 +254,66 @@ if show_risk_reward and not na(entry_price) and not na(stop_loss) and not na(tak
         // Store the current take profit and signal for persistence
         last_take_profit := take_profit
         last_trade_signal := trade_signal
+        
+        // Store stop loss for persistence
+        last_stop_loss := stop_loss
+        
+        // Create stop loss line
+        line.delete(stop_loss_line)
+        stop_loss_line := line.new(bar_index - 10, stop_loss, bar_index + 50, stop_loss, 
+                                  color=color.red, width=2, style=line.style_dashed)
+        
+        // Add "SL" label to the stop loss line
+        label.delete(sl_label)
+        sl_label := label.new(bar_index + 55, stop_loss, "SL", 
+                             color=color.red, 
+                             style=label.style_label_left, 
+                             textcolor=color.white, 
+                             size=size.small)
 
 // Show persistent profit target line if no new setup but we have a previous one
 if show_risk_reward and show_stop_targets and na(entry_price) and not na(last_take_profit)
-    // Keep the profit target line visible
-    if na(profit_target_line)
-        profit_target_line := line.new(bar_index - 10, last_take_profit, bar_index + 50, last_take_profit, 
-                                      color=color.green, width=2, style=line.style_dashed)
+    // Check if price has crossed the profit target
+    if (last_trade_signal == "LONG" and close >= last_take_profit) or (last_trade_signal == "SHORT" and close <= last_take_profit)
+        // Price has hit the profit target, remove the line and label
+        line.delete(profit_target_line)
+        label.delete(pt_label)
+        line.delete(stop_loss_line)
+        label.delete(sl_label)
+        last_take_profit := na
+        last_trade_signal := na
+        last_stop_loss := na
     else
-        // Update the existing line to extend forward
-        line.set_xy2(profit_target_line, bar_index + 50, last_take_profit)
+        // Keep the profit target line visible
+        if na(profit_target_line)
+            profit_target_line := line.new(bar_index - 10, last_take_profit, bar_index + 50, last_take_profit, 
+                                          color=color.green, width=2, style=line.style_dashed)
+        else
+            // Update the existing line to extend forward
+            line.set_xy2(profit_target_line, bar_index + 50, last_take_profit)
+        
+        // Keep the stop loss line visible
+        if na(stop_loss_line) and not na(last_stop_loss)
+            stop_loss_line := line.new(bar_index - 10, last_stop_loss, bar_index + 50, last_stop_loss, 
+                                      color=color.red, width=2, style=line.style_dashed)
+        else if not na(stop_loss_line)
+            // Update the existing stop loss line to extend forward
+            line.set_xy2(stop_loss_line, bar_index + 50, last_stop_loss)
+
+// Risk-Reward Ratio Table
+if show_risk_reward and not na(last_take_profit)
+    var table rr_table = table.new(position.top_right, 2, 3, bgcolor=color.black, border_width=1)
+    
+    if barstate.islast
+        table.cell(rr_table, 0, 0, "Risk-Reward", text_color=color.white, bgcolor=color.blue)
+        table.cell(rr_table, 1, 0, "", text_color=color.white, bgcolor=color.blue)
+        
+        table.cell(rr_table, 0, 1, "Signal", text_color=color.white)
+        table.cell(rr_table, 1, 1, last_trade_signal, text_color=last_trade_signal == "LONG" ? color.green : color.red)
+        
+        table.cell(rr_table, 0, 2, "R:R Ratio", text_color=color.white)
+        table.cell(rr_table, 1, 2, str.tostring(risk_reward_ratio, "#.##"), 
+                   text_color=risk_reward_ratio >= 2.0 ? color.green : color.red)
 
 // Breakout Alert Conditions
 // Alert when swing high line changes from teal to green (bullish breakout)
