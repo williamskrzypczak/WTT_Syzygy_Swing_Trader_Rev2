@@ -18,10 +18,11 @@ indicator("WTT_TrendTracker", overlay=true)
 // R1.10 - Alerts: Synchronized breakout alerts with line color changes
 // R1.11 - Stop Loss: Added red dashed stop loss lines with "SL" labels
 // R1.12 - Colors: Vibrant lime/fuchsia scheme + enhanced R:R table with opposite levels
+// R1.13 - Colors: Updated to vibrant lime/deep pink RGB scheme for maximum impact
 //
 // =============================================================================
 
-// R1.12 - Vibrant color scheme and enhanced risk-reward analysis
+// R1.13 - Vibrant lime and deep pink RGB color scheme
 
 // Input parameters
 lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
@@ -204,7 +205,7 @@ if not na(swing_low) and show_labels
     line.delete(low_line)
     // Change color if price has closed below the line
     low_breached := close < swing_low
-    line_color = low_breached ? color.fuchsia : color.gray
+    line_color = low_breached ? color.rgb(255, 20, 147) : color.gray
     low_line := line.new(swing_low_bar, swing_low, bar_index + 50, swing_low,color=line_color, width=2, style=line.style_solid)
     label.delete(low_label)
     low_label := label.new(bar_index + 5, swing_low, trend_status, 
@@ -262,12 +263,12 @@ if show_risk_reward and not na(entry_price) and not na(stop_loss) and not na(tak
         // Create stop loss line
         line.delete(stop_loss_line)
         stop_loss_line := line.new(bar_index - 10, stop_loss, bar_index + 50, stop_loss, 
-                                  color=color.fuchsia, width=2, style=line.style_dashed)
+                                  color=color.rgb(255, 20, 147), width=2, style=line.style_dashed)
         
         // Add "SL" label to the stop loss line
         label.delete(sl_label)
         sl_label := label.new(bar_index + 55, stop_loss, "SL", 
-                             color=color.fuchsia, 
+                             color=color.rgb(255, 20, 147), 
                              style=label.style_label_left, 
                              textcolor=color.white, 
                              size=size.small)
@@ -296,7 +297,7 @@ if show_risk_reward and show_stop_targets and na(entry_price) and not na(last_ta
         // Keep the stop loss line visible
         if na(stop_loss_line) and not na(last_stop_loss)
             stop_loss_line := line.new(bar_index - 10, last_stop_loss, bar_index + 50, last_stop_loss, 
-                                      color=color.fuchsia, width=2, style=line.style_dashed)
+                                      color=color.rgb(255, 20, 147), width=2, style=line.style_dashed)
         else if not na(stop_loss_line)
             // Update the existing stop loss line to extend forward
             line.set_xy2(stop_loss_line, bar_index + 50, last_stop_loss)
@@ -310,7 +311,7 @@ if show_risk_reward and not na(last_take_profit)
         table.cell(rr_table, 1, 0, "", text_color=color.white, bgcolor=color.blue)
         
         table.cell(rr_table, 0, 1, "Signal", text_color=color.white)
-        table.cell(rr_table, 1, 1, last_trade_signal, text_color=last_trade_signal == "LONG" ? color.lime : color.fuchsia)
+        table.cell(rr_table, 1, 1, last_trade_signal, text_color=last_trade_signal == "LONG" ? color.lime : color.rgb(255, 20, 147))
         
         table.cell(rr_table, 0, 2, "R:R Ratio", text_color=color.white)
         table.cell(rr_table, 1, 2, str.tostring(risk_reward_ratio, "#.##"), 

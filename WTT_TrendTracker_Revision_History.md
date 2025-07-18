@@ -89,7 +89,15 @@
 - **Better Visibility**: All signals and elements stand out clearly
 - **Complete Analysis**: Compare current vs. opposite stop loss risk-reward ratios
 
-## Current Features (R1.12)
+## R1.13 - Vibrant Deep Pink RGB Color Scheme
+- **RGB Deep Pink**: Updated to color.rgb(255, 20, 147) for maximum vibrancy
+- **Color Optimization**: Replaced unsupported color.pink with proper RGB values
+- **Maximum Visual Impact**: Bright lime green and deep pink create striking contrast
+- **Professional Appearance**: Vibrant, eye-catching colors that really pop
+- **Complete Consistency**: Same RGB deep pink across all bearish elements
+- **Enhanced Visibility**: All signals stand out brilliantly against chart background
+
+## Current Features (R1.13)
 
 ### Core Functionality
 - **Swing Point Detection**: 7-bar lookback period
