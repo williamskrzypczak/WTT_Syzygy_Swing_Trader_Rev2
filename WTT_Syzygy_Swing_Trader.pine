@@ -27,10 +27,11 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1", overlay=true)
 // R1.19 - Alerts: Added trailing stop activation alert synchronized with table status
 // R1.20 - Code Cleanup: Removed unused variables and optimized script performance
 // R1.21 - Enhanced Success Rate: Added partial profit taking tracking, profit factor calculation, and weighted success metrics
+// R1.22 - Table optimization and clarity improvements
 //
 // =============================================================================
 
-// R1.21 - Enhanced success rate calculation with partial profit taking tracking
+// R1.22 - Table optimization and clarity improvements
 
 // Input parameters
 lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
@@ -457,7 +458,7 @@ if show_risk_reward and show_stop_targets and not new_setup_triggered and not na
 
 // Risk-Reward Ratio Table
 if show_risk_reward
-    var table rr_table = table.new(position.top_right, 2, 10, bgcolor=color.rgb(20, 20, 30), border_width=2, border_color=color.rgb(100, 100, 150))
+    var table rr_table = table.new(position.top_right, 2, 9, bgcolor=color.rgb(20, 20, 30), border_width=2, border_color=color.rgb(100, 100, 150))
     
     if barstate.islast
         // Header with gradient effect and emojis
@@ -513,23 +514,16 @@ if show_risk_reward
         float partial_success_rate = total_breaches > 0 ? (partial_successes / total_breaches) * 100 : 0.0
         float overall_success_rate = total_breaches > 0 ? ((successful_trades + partial_successes) / total_breaches) * 100 : 0.0
         
-        // Calculate profit factor
-        float profit_factor = total_risk_taken > 0 ? total_profit_achieved / total_risk_taken : 0.0
-        
-        table.cell(rr_table, 0, 6, "🎯 Success Rate", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
+        table.cell(rr_table, 0, 6, "🎯 Success Rate/Edge", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
         table.cell(rr_table, 1, 6, str.tostring(overall_success_rate, "#.#") + "% (" + str.tostring(successful_trades + partial_successes) + "/" + str.tostring(total_breaches) + ")", text_color=overall_success_rate >= 50.0 ? color.rgb(0, 255, 150) : color.rgb(255, 100, 100), bgcolor=overall_success_rate >= 50.0 ? color.rgb(0, 50, 25) : color.rgb(50, 0, 0))
 
-        // Profit Factor
-        table.cell(rr_table, 0, 7, "💰 Profit Factor", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
-        table.cell(rr_table, 1, 7, str.tostring(profit_factor, "#.##"), text_color=profit_factor >= 1.0 ? color.rgb(0, 255, 150) : color.rgb(255, 100, 100), bgcolor=profit_factor >= 1.0 ? color.rgb(0, 50, 25) : color.rgb(50, 0, 0))
-
         // Remaining Position Size
-        table.cell(rr_table, 0, 8, "📊 Remaining Size", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
-        table.cell(rr_table, 1, 8, not na(remaining_position_size) ? str.tostring(remaining_position_size, "#.##") + "%" : "na", text_color=color.rgb(255, 200, 100), bgcolor=color.rgb(50, 30, 0))
+        table.cell(rr_table, 0, 7, "📊 Remaining Size", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
+        table.cell(rr_table, 1, 7, not na(remaining_position_size) ? str.tostring(remaining_position_size, "#.##") + "%" : "na", text_color=color.rgb(255, 200, 100), bgcolor=color.rgb(50, 30, 0))
 
         // Profit Maximization Status
-        table.cell(rr_table, 0, 9, "🎯 PM Status", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
-        table.cell(rr_table, 1, 9, not na(partial_taken) ? "Partial: " + (partial_taken ? "Yes" : "No") + " | " + (trailing_activated ? "Trailing: Yes" : "Trailing: No") : "No PM", text_color=color.rgb(255, 200, 100), bgcolor=color.rgb(50, 30, 0))
+        table.cell(rr_table, 0, 8, "🎯 PM Status", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
+        table.cell(rr_table, 1, 8, not na(partial_taken) ? "Partial: " + (partial_taken ? "Yes" : "No") + " | " + (trailing_activated ? "Trailing: Yes" : "Trailing: No") : "No PM", text_color=color.rgb(255, 200, 100), bgcolor=color.rgb(50, 30, 0))
 
 
 
