@@ -26,10 +26,11 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1", overlay=true)
 // R1.18 - Success Tracking: Added success rate calculation and remaining position size
 // R1.19 - Alerts: Added trailing stop activation alert synchronized with table status
 // R1.20 - Code Cleanup: Removed unused variables and optimized script performance
+// R1.21 - Enhanced Success Rate: Added partial profit taking tracking, profit factor calculation, and weighted success metrics
 //
 // =============================================================================
 
-// R1.20 - Code cleanup and optimization
+// R1.21 - Enhanced success rate calculation with partial profit taking tracking
 
 // Input parameters
 lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
@@ -104,10 +105,15 @@ var int setup_bar = na
 // Success Rate Tracking Variables
 var int total_breaches = 0
 var int successful_trades = 0
+var int partial_successes = 0
+var float total_profit_achieved = 0.0
+var float total_risk_taken = 0.0
 var bool current_trade_active = false
 var float max_pips_beyond_breakout = 0.0
 var float last_entry_price = na
 var float persistent_entry_price = na
+var float trade_profit_achieved = 0.0
+var float trade_risk_taken = 0.0
 
 // Profit Maximization Variables
 var bool partial_taken = false
@@ -181,6 +187,8 @@ if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
         
         current_trade_active := true
         max_pips_beyond_breakout := 0.0
+        trade_profit_achieved := 0.0
+        trade_risk_taken := 0.0
     
     // Long setup: Price breaks above swing high (breakout) - only on new breach
     if new_long_breach
@@ -280,6 +288,19 @@ if current_trade_active and not na(last_entry_price) and not na(partial_exit_lev
         if (last_trade_signal == "LONG" and close >= partial_exit_level) or (last_trade_signal == "SHORT" and close <= partial_exit_level)
             partial_taken := true
             remaining_position_size := 100.0 - partial_exit_size
+            
+            // Calculate partial profit achieved
+            if last_trade_signal == "LONG"
+                trade_profit_achieved := (partial_exit_level - last_entry_price) * (partial_exit_size / 100.0)
+                trade_risk_taken := (last_entry_price - last_stop_loss) * (partial_exit_size / 100.0)
+            else if last_trade_signal == "SHORT"
+                trade_profit_achieved := (last_entry_price - partial_exit_level) * (partial_exit_size / 100.0)
+                trade_risk_taken := (last_stop_loss - last_entry_price) * (partial_exit_size / 100.0)
+            
+            // Track partial success
+            partial_successes := partial_successes + 1
+            total_profit_achieved := total_profit_achieved + trade_profit_achieved
+            total_risk_taken := total_risk_taken + trade_risk_taken
     
     // Check for trailing stop activation
     if enable_trailing_stop and not trailing_activated
@@ -402,9 +423,31 @@ if show_risk_reward and show_stop_targets and not new_setup_triggered and not na
         last_stop_loss := na
         persistent_entry_price := na
         
-        // Track successful trade
-        if current_trade_active
+        // Calculate full profit achieved for remaining position
+        if current_trade_active and not na(last_entry_price)
+            float full_profit_achieved = 0.0
+            float full_risk_taken = 0.0
+            
+            if profit_target_hit
+                if last_trade_signal == "LONG"
+                    full_profit_achieved := (last_take_profit - last_entry_price) * (remaining_position_size / 100.0)
+                    full_risk_taken := (last_entry_price - last_stop_loss) * (remaining_position_size / 100.0)
+                else if last_trade_signal == "SHORT"
+                    full_profit_achieved := (last_entry_price - last_take_profit) * (remaining_position_size / 100.0)
+                    full_risk_taken := (last_stop_loss - last_entry_price) * (remaining_position_size / 100.0)
+            else if trailing_stop_hit
+                if last_trade_signal == "LONG"
+                    full_profit_achieved := (trailing_stop_level - last_entry_price) * (remaining_position_size / 100.0)
+                    full_risk_taken := (last_entry_price - last_stop_loss) * (remaining_position_size / 100.0)
+                else if last_trade_signal == "SHORT"
+                    full_profit_achieved := (last_entry_price - trailing_stop_level) * (remaining_position_size / 100.0)
+                    full_risk_taken := (last_stop_loss - last_entry_price) * (remaining_position_size / 100.0)
+            
+            // Track full success and total profit
             successful_trades := successful_trades + 1
+            total_profit_achieved := total_profit_achieved + full_profit_achieved
+            total_risk_taken := total_risk_taken + full_risk_taken
+            
             current_trade_active := false
             max_pips_beyond_breakout := 0.0
             partial_taken := false
@@ -414,7 +457,7 @@ if show_risk_reward and show_stop_targets and not new_setup_triggered and not na
 
 // Risk-Reward Ratio Table
 if show_risk_reward
-    var table rr_table = table.new(position.top_right, 2, 9, bgcolor=color.rgb(20, 20, 30), border_width=2, border_color=color.rgb(100, 100, 150))
+    var table rr_table = table.new(position.top_right, 2, 10, bgcolor=color.rgb(20, 20, 30), border_width=2, border_color=color.rgb(100, 100, 150))
     
     if barstate.islast
         // Header with gradient effect and emojis
@@ -465,19 +508,28 @@ if show_risk_reward
         table.cell(rr_table, 0, 5, "📏 Pip Distance", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
         table.cell(rr_table, 1, 5, not na(pip_distance) ? str.tostring(pip_distance, "#") + " pips" : "na", text_color=color.rgb(255, 255, 150), bgcolor=color.rgb(50, 50, 0))
         
-        // Success Rate calculation
-        float success_rate = total_breaches > 0 ? (successful_trades / total_breaches) * 100 : 0.0
+        // Success Rate calculation - now accounts for partial profit taking
+        float full_success_rate = total_breaches > 0 ? (successful_trades / total_breaches) * 100 : 0.0
+        float partial_success_rate = total_breaches > 0 ? (partial_successes / total_breaches) * 100 : 0.0
+        float overall_success_rate = total_breaches > 0 ? ((successful_trades + partial_successes) / total_breaches) * 100 : 0.0
+        
+        // Calculate profit factor
+        float profit_factor = total_risk_taken > 0 ? total_profit_achieved / total_risk_taken : 0.0
         
         table.cell(rr_table, 0, 6, "🎯 Success Rate", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
-        table.cell(rr_table, 1, 6, str.tostring(success_rate, "#.#") + "% (" + str.tostring(successful_trades) + "/" + str.tostring(total_breaches) + ")", text_color=success_rate >= 50.0 ? color.rgb(0, 255, 150) : color.rgb(255, 100, 100), bgcolor=success_rate >= 50.0 ? color.rgb(0, 50, 25) : color.rgb(50, 0, 0))
+        table.cell(rr_table, 1, 6, str.tostring(overall_success_rate, "#.#") + "% (" + str.tostring(successful_trades + partial_successes) + "/" + str.tostring(total_breaches) + ")", text_color=overall_success_rate >= 50.0 ? color.rgb(0, 255, 150) : color.rgb(255, 100, 100), bgcolor=overall_success_rate >= 50.0 ? color.rgb(0, 50, 25) : color.rgb(50, 0, 0))
+
+        // Profit Factor
+        table.cell(rr_table, 0, 7, "💰 Profit Factor", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
+        table.cell(rr_table, 1, 7, str.tostring(profit_factor, "#.##"), text_color=profit_factor >= 1.0 ? color.rgb(0, 255, 150) : color.rgb(255, 100, 100), bgcolor=profit_factor >= 1.0 ? color.rgb(0, 50, 25) : color.rgb(50, 0, 0))
 
         // Remaining Position Size
-        table.cell(rr_table, 0, 7, "💰 Remaining Size", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
-        table.cell(rr_table, 1, 7, not na(remaining_position_size) ? str.tostring(remaining_position_size, "#.##") + "%" : "na", text_color=color.rgb(255, 200, 100), bgcolor=color.rgb(50, 30, 0))
+        table.cell(rr_table, 0, 8, "📊 Remaining Size", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
+        table.cell(rr_table, 1, 8, not na(remaining_position_size) ? str.tostring(remaining_position_size, "#.##") + "%" : "na", text_color=color.rgb(255, 200, 100), bgcolor=color.rgb(50, 30, 0))
 
         // Profit Maximization Status
-        table.cell(rr_table, 0, 8, "🎯 PM Status", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
-        table.cell(rr_table, 1, 8, not na(partial_taken) ? "Partial: " + (partial_taken ? "Yes" : "No") + " | " + (trailing_activated ? "Trailing: Yes" : "Trailing: No") : "No PM", text_color=color.rgb(255, 200, 100), bgcolor=color.rgb(50, 30, 0))
+        table.cell(rr_table, 0, 9, "🎯 PM Status", text_color=color.rgb(200, 200, 255), bgcolor=color.rgb(30, 30, 50))
+        table.cell(rr_table, 1, 9, not na(partial_taken) ? "Partial: " + (partial_taken ? "Yes" : "No") + " | " + (trailing_activated ? "Trailing: Yes" : "Trailing: No") : "No PM", text_color=color.rgb(255, 200, 100), bgcolor=color.rgb(50, 30, 0))
 
 
 
