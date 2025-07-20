@@ -18,13 +18,45 @@
             color: #333;
             line-height: 1.6;
             margin: 0;
-            padding: 15px;
+            padding: 0;
         }
 
         .container {
             max-width: 1600px;
             margin: 0 auto;
             padding: 0;
+        }
+
+        .header-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .header-banner h1 {
+            font-size: 3rem;
+            margin: 0 0 10px 0;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header-banner .subtitle {
+            font-size: 1.3rem;
+            margin: 0 0 15px 0;
+            opacity: 0.9;
+        }
+
+        .header-banner .version {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
         }
 
         .header {
@@ -273,14 +305,14 @@
     </style>
 </head>
 <body>
+    <!-- Header Banner -->
+    <div class="header-banner">
+        <h1>WTT Syzygy Swing Trader</h1>
+        <div class="subtitle">Quick Reference Guide</div>
+        <div class="version">R1.24</div>
+    </div>
+    
     <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>WTT Syzygy Swing Trader</h1>
-            <div class="subtitle">Quick Reference Guide</div>
-            <div class="version-badge">R1.24</div>
-        </div>
-
         <!-- How to Use Section -->
         <div class="card">
             <h2>🚀 How to Use</h2>
