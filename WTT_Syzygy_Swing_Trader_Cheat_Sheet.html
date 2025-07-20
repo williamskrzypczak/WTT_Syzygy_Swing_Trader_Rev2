@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WTT Syzygy Swing Trader - Ultimate Cheat Sheet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease-in-out infinite;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: pulse 2s infinite;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .card h2::before {
+            content: '';
+            width: 4px;
+            height: 30px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 2px;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-list li:hover {
+            background: linear-gradient(90deg, rgba(255,107,107,0.1), rgba(78,205,196,0.1));
+            padding-left: 15px;
+            border-radius: 8px;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .icon.success { background: linear-gradient(45deg, #4ecdc4, #44a08d); }
+        .icon.warning { background: linear-gradient(45deg, #ff6b6b, #ee5a52); }
+        .icon.info { background: linear-gradient(45deg, #45b7d1, #3498db); }
+        .icon.purple { background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+        .icon.orange { background: linear-gradient(45deg, #f39c12, #e67e22); }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin: 15px 0;
+            overflow-x: auto;
+            border-left: 4px solid #4ecdc4;
+        }
+
+        .highlight {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .alert-box {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #c0392b;
+            animation: slideInRight 0.8s ease-out;
+        }
+
+        .success-box {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #27ae60;
+        }
+
+        .info-box {
+            background: linear-gradient(45deg, #45b7d1, #3498db);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #2980b9;
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .color-swatch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .swatch-lime { background: linear-gradient(45deg, #32cd32, #228b22); }
+        .swatch-pink { background: linear-gradient(45deg, #ff1493, #c71585); }
+        .swatch-blue { background: linear-gradient(45deg, #4169e1, #1e90ff); }
+        .swatch-orange { background: linear-gradient(45deg, #ff8c00, #ff6347); }
+
+        .table-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .table-section h2 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .table-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .table-item {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .table-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+
+        .table-item h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .table-item p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .footer p {
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .color-palette {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>WTT Syzygy Swing Trader</h1>
+            <div class="subtitle">Ultimate Trading Indicator Cheat Sheet</div>
+            <div class="version-badge">Version R1.24</div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="card">
+            <h2>🚀 Quick Start Guide</h2>
+            <ul class="feature-list">
+                <li>
+                    <div class="icon success">1</div>
+                    <span>Add indicator to your TradingView chart</span>
+                </li>
+                <li>
+                    <div class="icon success">2</div>
+                    <span>Set <span class="highlight">Lookback Period</span> (default: 7)</span>
+                </li>
+                <li>
+                    <div class="icon success">3</div>
+                    <span>Enable <span class="highlight">Risk-Reward Analysis</span></span>
+                </li>
+                <li>
+                    <div class="icon success">4</div>
+                    <span>Configure your <span class="highlight">Account Size</span> and <span class="highlight">Risk Per Trade</span></span>
+                </li>
+                <li>
+                    <div class="icon success">5</div>
+                    <span>Watch for <span class="highlight">Lime Green</span> breakout signals!</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Core Features -->
+        <div class="grid">
+            <div class="card">
+                <h2>🎯 Core Features</h2>
+                <ul class="feature-list">
+                    <li>
+                        <div class="icon success">✓</div>
+                        <span><strong>Swing Point Detection:</strong> Automatic high/low identification</span>
+                    </li>
+                    <li>
+                        <div class="icon success">✓</div>
+                        <span><strong>Dynamic Breakout Lines:</strong> Real-time support/resistance</span>
+                    </li>
+                    <li>
+                        <div class="icon success">✓</div>
+                        <span><strong>Risk-Reward Optimization:</strong> Automatic position sizing</span>
+                    </li>
+                    <li>
+                        <div class="icon success">✓</div>
+                        <span><strong>Profit Maximization:</strong> Partial exits & trailing stops</span>
+                    </li>
+                    <li>
+                        <div class="icon success">✓</div>
+                        <span><strong>Smart Alerts:</strong> Synchronized with visual signals</span>
+                    </li>
+                    <li>
+                        <div class="icon success">✓</div>
+                        <span><strong>Performance Tracking:</strong> Success rate & pip distance</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>⚙️ Key Settings</h2>
+                <ul class="feature-list">
+                    <li>
+                        <div class="icon info">📊</div>
+                        <span><strong>Lookback Period:</strong> 7 (swing detection sensitivity)</span>
+                    </li>
+                    <li>
+                        <div class="icon info">💰</div>
+                        <span><strong>Risk Per Trade:</strong> 1.0% (recommended)</span>
+                    </li>
+                    <li>
+                        <div class="icon info">🏦</div>
+                        <span><strong>Account Size:</strong> $10,000 (position sizing base)</span>
+                    </li>
+                    <li>
+                        <div class="icon info">🎯</div>
+                        <span><strong>Partial Exit:</strong> 50% at 1:1 R:R ratio</span>
+                    </li>
+                    <li>
+                        <div class="icon info">📈</div>
+                        <span><strong>Trailing Stop:</strong> Activates at 0.5 R:R</span>
+                    </li>
+                    <li>
+                        <div class="icon info">📋</div>
+                        <span><strong>Strategy Rules:</strong> Toggle in table display</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Color Code -->
+        <div class="card">
+            <h2>🎨 Visual Color Code</h2>
+            <div class="color-palette">
+                <div class="color-swatch swatch-lime">
+                    <span>🟢</span>
+                    <span>Lime Green - Long Breakout</span>
+                </div>
+                <div class="color-swatch swatch-pink">
+                    <span>🟣</span>
+                    <span>Deep Pink - Short Breakdown</span>
+                </div>
+                <div class="color-swatch swatch-blue">
+                    <span>🔵</span>
+                    <span>Blue - Stop Loss Lines</span>
+                </div>
+                <div class="color-swatch swatch-orange">
+                    <span>🟠</span>
+                    <span>Orange - Partial Exit Level</span>
+                </div>
+            </div>
+            <div class="info-box">
+                <strong>💡 Pro Tip:</strong> Lines change color based on price action. Green = bullish, Pink = bearish!
+            </div>
+        </div>
+
+        <!-- Trading Strategy -->
+        <div class="grid">
+            <div class="card">
+                <h2>📈 Long Strategy</h2>
+                <ul class="feature-list">
+                    <li>
+                        <div class="icon success">📈</div>
+                        <span>Wait for <span class="highlight">Lime Green</span> breakout above swing high</span>
+                    </li>
+                    <li>
+                        <div class="icon success">🎯</div>
+                        <span>Enter at breakout level</span>
+                    </li>
+                    <li>
+                        <div class="icon success">🛑</div>
+                        <span>Stop loss at recent swing low</span>
+                    </li>
+                    <li>
+                        <div class="icon success">💰</div>
+                        <span>Take profit at 1:1 risk-reward ratio</span>
+                    </li>
+                    <li>
+                        <div class="icon success">📊</div>
+                        <span>Partial exit at 50% position size</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>📉 Short Strategy</h2>
+                <ul class="feature-list">
+                    <li>
+                        <div class="icon warning">📉</div>
+                        <span>Wait for <span class="highlight">Deep Pink</span> breakdown below swing low</span>
+                    </li>
+                    <li>
+                        <div class="icon warning">🎯</div>
+                        <span>Enter at breakdown level</span>
+                    </li>
+                    <li>
+                        <div class="icon warning">🛑</div>
+                        <span>Stop loss at recent swing high</span>
+                    </li>
+                    <li>
+                        <div class="icon warning">💰</div>
+                        <span>Take profit at 1:1 risk-reward ratio</span>
+                    </li>
+                    <li>
+                        <div class="icon warning">📊</div>
+                        <span>Partial exit at 50% position size</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Risk-Reward Table -->
+        <div class="table-section">
+            <h2>📊 Risk-Reward Table Features</h2>
+            <div class="table-grid">
+                <div class="table-item">
+                    <h3>💰 Entry Price</h3>
+                    <p>Current breakout/breakdown level</p>
+                </div>
+                <div class="table-item">
+                    <h3>🛑 Stop Loss</h3>
+                    <p>Opposite swing point level</p>
+                </div>
+                <div class="table-item">
+                    <h3>🎯 Take Profit</h3>
+                    <p>1:1 risk-reward target</p>
+                </div>
+                <div class="table-item">
+                    <h3>⚖️ Risk-Reward</h3>
+                    <p>Calculated ratio display</p>
+                </div>
+                <div class="table-item">
+                    <h3>📈 Success Rate</h3>
+                    <p>Historical performance tracking</p>
+                </div>
+                <div class="table-item">
+                    <h3>📏 Pip Distance</h3>
+                    <p>Distance to profit target</p>
+                </div>
+                <div class="table-item">
+                    <h3>💼 Position Size</h3>
+                    <p>Calculated based on risk</p>
+                </div>
+                <div class="table-item">
+                    <h3>📋 Strategy Rules</h3>
+                    <p>Toggle-able instructions</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert System -->
+        <div class="card">
+            <h2>🔔 Alert System</h2>
+            <ul class="feature-list">
+                <li>
+                    <div class="icon info">🔔</div>
+                    <span><strong>Breakout Alert:</strong> Triggers on lime green signal</span>
+                </li>
+                <li>
+                    <div class="icon info">🔔</div>
+                    <span><strong>Breakdown Alert:</strong> Triggers on deep pink signal</span>
+                </li>
+                <li>
+                    <div class="icon info">🔔</div>
+                    <span><strong>Trailing Stop Alert:</strong> When trailing stop activates</span>
+                </li>
+                <li>
+                    <div class="icon info">🔔</div>
+                    <span><strong>Partial Exit Alert:</strong> When 50% position closes</span>
+                </li>
+            </ul>
+            <div class="alert-box">
+                <strong>⚠️ Important:</strong> Set up alerts in TradingView's alert panel for real-time notifications!
+            </div>
+        </div>
+
+        <!-- Pro Tips -->
+        <div class="grid">
+            <div class="card">
+                <h2>💡 Pro Trading Tips</h2>
+                <ul class="feature-list">
+                    <li>
+                        <div class="icon purple">💎</div>
+                        <span>Use on 4H or Daily timeframes for swing trades</span>
+                    </li>
+                    <li>
+                        <div class="icon purple">💎</div>
+                        <span>Combine with volume analysis for confirmation</span>
+                    </li>
+                    <li>
+                        <div class="icon purple">💎</div>
+                        <span>Wait for strong momentum after breakout</span>
+                    </li>
+                    <li>
+                        <div class="icon purple">💎</div>
+                        <span>Use partial exits to lock in profits</span>
+                    </li>
+                    <li>
+                        <div class="icon purple">💎</div>
+                        <span>Monitor success rate for strategy validation</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>🚫 Common Mistakes</h2>
+                <ul class="feature-list">
+                    <li>
+                        <div class="icon warning">❌</div>
+                        <span>Don't trade against the trend</span>
+                    </li>
+                    <li>
+                        <div class="icon warning">❌</div>
+                        <span>Don't ignore stop losses</span>
+                    </li>
+                    <li>
+                        <div class="icon warning">❌</div>
+                        <span>Don't overtrade - wait for quality setups</span>
+                    </li>
+                    <li>
+                        <div class="icon warning">❌</div>
+                        <span>Don't risk more than 1% per trade</span>
+                    </li>
+                    <li>
+                        <div class="icon warning">❌</div>
+                        <span>Don't chase breakouts without confirmation</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Code Example -->
+        <div class="card">
+            <h2>🔧 Advanced Configuration</h2>
+            <div class="code-block">
+// Recommended Settings for Different Timeframes
+
+// 4H Timeframe (Swing Trading)
+lookback = 7
+risk_per_trade = 1.0
+partial_exit_ratio = 1.0
+trailing_activation_ratio = 0.5
+
+// Daily Timeframe (Position Trading)
+lookback = 10
+risk_per_trade = 0.5
+partial_exit_ratio = 1.5
+trailing_activation_ratio = 0.75
+
+// 1H Timeframe (Day Trading)
+lookback = 5
+risk_per_trade = 0.5
+partial_exit_ratio = 0.75
+trailing_activation_ratio = 0.25
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🎯 <strong>WTT Syzygy Swing Trader R1.24</strong> - Your Ultimate Swing Trading Companion</p>
+            <p>💡 Remember: Always backtest and paper trade before live trading!</p>
+        </div>
+    </div>
+</body>
+</html> 
