@@ -60,7 +60,7 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 20px;
             margin-bottom: 20px;
         }
@@ -190,7 +190,7 @@
 
         .step-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 12px;
             margin: 15px 0;
         }
@@ -261,7 +261,7 @@
         /* Optimize for wider screens */
         @media (min-width: 1200px) {
             .grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, 1fr);
             }
             .step-grid {
                 grid-template-columns: repeat(4, 1fr);
@@ -422,76 +422,77 @@
             </div>
         </div>
 
-        <!-- Visual Guide -->
-        <div class="card">
-            <h2>🎨 Visual Signals</h2>
-            <div class="color-palette">
-                <div class="color-swatch swatch-lime">
-                    <span>🟢</span>
-                    <span>Lime Green - Long Breakout</span>
+        <!-- Visual Guide & Risk-Reward Table -->
+        <div class="grid">
+            <div class="card">
+                <h2>🎨 Visual Signals</h2>
+                <div class="color-palette">
+                    <div class="color-swatch swatch-lime">
+                        <span>🟢</span>
+                        <span>Lime Green - Long Breakout</span>
+                    </div>
+                    <div class="color-swatch swatch-pink">
+                        <span>🟣</span>
+                        <span>Deep Pink - Short Breakdown</span>
+                    </div>
+                    <div class="color-swatch swatch-blue">
+                        <span>🔵</span>
+                        <span>Blue - Stop Loss Lines</span>
+                    </div>
+                    <div class="color-swatch swatch-orange">
+                        <span>🟠</span>
+                        <span>Orange - Partial Exit Level</span>
+                    </div>
                 </div>
-                <div class="color-swatch swatch-pink">
-                    <span>🟣</span>
-                    <span>Deep Pink - Short Breakdown</span>
+                <div class="alert-box">
+                    <strong>⚠️ Important:</strong> Lines change color based on price action. Green = bullish, Pink = bearish!
                 </div>
-                <div class="color-swatch swatch-blue">
-                    <span>🔵</span>
-                    <span>Blue - Stop Loss Lines</span>
-                </div>
-                <div class="color-swatch swatch-orange">
-                    <span>🟠</span>
-                    <span>Orange - Partial Exit Level</span>
+                <div class="success-box">
+                    <strong>🎯 Trailing Stop Strategy:</strong> When price reaches 0.5 R:R, trailing stop activates at 0.5 R:R distance to lock in profits!
                 </div>
             </div>
-            <div class="alert-box">
-                <strong>⚠️ Important:</strong> Lines change color based on price action. Green = bullish, Pink = bearish!
-            </div>
-            <div class="success-box">
-                <strong>🎯 Trailing Stop Strategy:</strong> When price reaches 0.5 R:R, trailing stop activates at 0.5 R:R distance to lock in profits!
-            </div>
-        </div>
 
-        <!-- Risk-Reward Table -->
-        <div class="card">
-            <h2>📊 Risk-Reward Table</h2>
-            <ul class="feature-list">
-                <li>
-                    <div class="icon info">💰</div>
-                    <span><strong>Entry Price:</strong> Current breakout/breakdown level</span>
-                </li>
-                <li>
-                    <div class="icon info">🛑</div>
-                    <span><strong>Stop Loss:</strong> Opposite swing point level</span>
-                </li>
-                <li>
-                    <div class="icon info">🎯</div>
-                    <span><strong>Take Profit:</strong> 1:1 risk-reward target</span>
-                </li>
-                <li>
-                    <div class="icon info">📊</div>
-                    <span><strong>Partial Exit:</strong> 50% at 1:1 R:R ratio</span>
-                </li>
-                <li>
-                    <div class="icon info">🎯</div>
-                    <span><strong>Trailing Stop:</strong> Activates at 0.5 R:R, distance 0.5 R:R</span>
-                </li>
-                <li>
-                    <div class="icon info">⚖️</div>
-                    <span><strong>Risk-Reward:</strong> Calculated ratio display</span>
-                </li>
-                <li>
-                    <div class="icon info">📈</div>
-                    <span><strong>Success Rate:</strong> Historical performance tracking</span>
-                </li>
-                <li>
-                    <div class="icon info">📏</div>
-                    <span><strong>Pip Distance:</strong> Distance to profit target</span>
-                </li>
-                <li>
-                    <div class="icon info">💼</div>
-                    <span><strong>Position Size:</strong> Calculated based on risk</span>
-                </li>
-            </ul>
+            <div class="card">
+                <h2>📊 Risk-Reward Table</h2>
+                <ul class="feature-list">
+                    <li>
+                        <div class="icon info">💰</div>
+                        <span><strong>Entry Price:</strong> Current breakout/breakdown level</span>
+                    </li>
+                    <li>
+                        <div class="icon info">🛑</div>
+                        <span><strong>Stop Loss:</strong> Opposite swing point level</span>
+                    </li>
+                    <li>
+                        <div class="icon info">🎯</div>
+                        <span><strong>Take Profit:</strong> 1:1 risk-reward target</span>
+                    </li>
+                    <li>
+                        <div class="icon info">📊</div>
+                        <span><strong>Partial Exit:</strong> 50% at 1:1 R:R ratio</span>
+                    </li>
+                    <li>
+                        <div class="icon info">🎯</div>
+                        <span><strong>Trailing Stop:</strong> Activates at 0.5 R:R, distance 0.5 R:R</span>
+                    </li>
+                    <li>
+                        <div class="icon info">⚖️</div>
+                        <span><strong>Risk-Reward:</strong> Calculated ratio display</span>
+                    </li>
+                    <li>
+                        <div class="icon info">📈</div>
+                        <span><strong>Success Rate:</strong> Historical performance tracking</span>
+                    </li>
+                    <li>
+                        <div class="icon info">📏</div>
+                        <span><strong>Pip Distance:</strong> Distance to profit target</span>
+                    </li>
+                    <li>
+                        <div class="icon info">💼</div>
+                        <span><strong>Position Size:</strong> Calculated based on risk</span>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         <!-- Alerts & Tips -->
