@@ -1,23 +1,46 @@
 //@version=5
 indicator("WTT_Syzygy_Swing_Trader_Rev1", overlay=true)
 
-// WTT Syzygy Swing Trader - Revision History
+// =============================================================================
+// WTT SYZYGY SWING TRADER - REVISION HISTORY
+// =============================================================================
 
-// R1.0 - R1.27: Foundation & Core Features
+// R1.0 - R1.27: FOUNDATION & CORE FEATURES
+// =========================================
+// The indicator evolved from basic swing detection to a comprehensive swing trading system. 
+// Key milestones included implementing 7-bar lookback pivot detection, dynamic color-changing 
+// breakout lines (lime green for bullish, deep pink for bearish), and persistent profit 
+// target/stop loss lines. The risk-reward table was added with live calculations, success 
+// rate tracking, and partial profit-taking logic. Visual enhancements included vibrant color 
+// schemes, theme toggles, and debug indicators. Alert systems were refined using 
+// `alertcondition` for reliable breakout notifications.
 
-// The indicator evolved from basic swing detection to a comprehensive swing trading system. Key milestones included implementing 7-bar lookback pivot detection, dynamic color-changing breakout lines (lime green for bullish, deep pink for bearish), and persistent profit target/stop loss lines. The risk-reward table was added with live calculations, success rate tracking, and partial profit-taking logic. Visual enhancements included vibrant color schemes, theme toggles, and debug indicators. Alert systems were refined using `alertcondition` for reliable breakout notifications.
+// R1.28: ENHANCED TABLE & INTERFACE OPTIMIZATION
+// ==============================================
+// Added RSI and Volume tracking to the risk-reward table with color-coded status indicators. 
+// RSI shows Overbought (red), Oversold (green), Bullish (green), Bearish (red), and Neutral 
+// (orange) states. Volume displays Weak (red), Normal (orange), and High (green) status. 
+// Implemented table toggle functionality and removed unused "Risk Per Trade Percentage" and 
+// "Account Size" inputs for a cleaner interface. Streamlined code by eliminating unused 
+// position sizing calculations and variables.
 
-// R1.28: Enhanced Table & Interface Optimization
+// R1.29: RSI REMOVAL & VOLUME ENHANCEMENT
+// =======================================
+// Completely removed all RSI functionality from the indicator to simplify the codebase and 
+// focus on core swing trading features. Replaced RSI input with a dedicated "Show Volume in 
+// Table" toggle. Enhanced volume display to show both status (High/Normal/Weak) and actual 
+// volume numbers (e.g., "High (1250K)") for better quantitative analysis. Reduced table size 
+// from 10 to 9 rows when volume is enabled, streamlining the interface while maintaining all 
+// essential trading information.
 
-// Added RSI and Volume tracking to the risk-reward table with color-coded status indicators. RSI shows Overbought (red), Oversold (green), Bullish (green), Bearish (red), and Neutral (orange) states. Volume displays Weak (red), Normal (orange), and High (green) status. Implemented table toggle functionality and removed unused "Risk Per Trade Percentage" and "Account Size" inputs for a cleaner interface. Streamlined code by eliminating unused position sizing calculations and variables.
+// FUTURE REVISIONS (R2.0+)
+// ========================
+// All future updates will be numbered R2.0 and above, with consolidated change descriptions 
+// in paragraph format for better readability and maintenance.
 
-// Future Revisions (R2.0+)
-
-// All future updates will be numbered R2.0 and above, with consolidated change descriptions in paragraph format for better readability and maintenance.
-
-// ---
-
-// Current version: R1.28 | Next version: R2.0** 
+// =============================================================================
+// CURRENT VERSION: R1.29 | NEXT VERSION: R2.0
+// ============================================================================= 
 
 // Input parameters
 lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
@@ -540,7 +563,7 @@ if show_risk_reward and show_table
                     volume_color := light_table_theme ? color.rgb(255, 140, 0) : color.rgb(255, 165, 0)  // Orange color
             
             table.cell(rr_table, 0, 8, "📈 Volume", text_color=header_text, bgcolor=header_bg)
-            table.cell(rr_table, 1, 8, not na(volume_ratio) ? volume_status + " (" + str.tostring(volume, "#") + ")" : "Loading...", text_color=volume_color, bgcolor=info_bg)
+            table.cell(rr_table, 1, 8, not na(volume_ratio) ? volume_status + " (" + str.tostring(volume, "#") + "K)" : "Loading...", text_color=volume_color, bgcolor=info_bg)
 
 
 
