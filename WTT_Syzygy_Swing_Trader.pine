@@ -47,6 +47,7 @@ account_size = input.float(10000, "Account Size ($)", minval=1000, maxval=100000
 show_stop_targets = input.bool(true, "Show Stop Loss & Take Profit")
 show_strategy_rules = input.bool(false, "Show Strategy Rules in Table")
 light_table_theme = input.bool(true, "Light Table Theme (Toggle for Dark)")
+show_debug_symbols = input.bool(false, "Show Debug Symbols")
 
 // Profit Maximization Inputs
 enable_partial_taking = input.bool(true, "Enable Partial Profit Taking")
@@ -179,6 +180,8 @@ if array.size(swing_highs) >= 2 and array.size(swing_lows) >= 2
 
 // Risk-Reward Optimization Logic - Only calculate on new breaches
 if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
+
+    
     // Calculate potential entry points
     current_price = close
     
@@ -295,14 +298,18 @@ if current_trade_active and not na(entry_price)
         max_pips_beyond_breakout := math.min(max_pips_beyond_breakout, low)
 
 // Profit Maximization Logic - Partial Profit Taking and Trailing Stop
-if current_trade_active and not na(last_entry_price) and not na(persistent_partial_exit_level)
+bool trade_active = current_trade_active
+bool has_entry = not na(last_entry_price)
+bool has_exit_level = not na(persistent_partial_exit_level)
+bool profit_max_active = trade_active and has_entry and has_exit_level
+if profit_max_active
     // Check for partial profit taking
     if enable_partial_taking and not partial_taken
         if (last_trade_signal == "LONG" and close >= persistent_partial_exit_level) or (last_trade_signal == "SHORT" and close <= persistent_partial_exit_level)
             partial_taken := true
             remaining_position_size := 100.0 - partial_exit_size
             
-            // Calculate partial profit achieved
+            // Calculate partial profit achieved and risk taken
             if last_trade_signal == "LONG"
                 trade_profit_achieved := (persistent_partial_exit_level - last_entry_price) * (partial_exit_size / 100.0)
                 trade_risk_taken := (last_entry_price - last_stop_loss) * (partial_exit_size / 100.0)
@@ -310,10 +317,10 @@ if current_trade_active and not na(last_entry_price) and not na(persistent_parti
                 trade_profit_achieved := (last_entry_price - persistent_partial_exit_level) * (partial_exit_size / 100.0)
                 trade_risk_taken := (last_stop_loss - last_entry_price) * (partial_exit_size / 100.0)
             
-            // Track partial success
-            partial_successes := partial_successes + 1
+            // Update total success tracking
             total_profit_achieved := total_profit_achieved + trade_profit_achieved
             total_risk_taken := total_risk_taken + trade_risk_taken
+            partial_successes := partial_successes + 1
     
     // Check for trailing stop activation
     if enable_trailing_stop and not trailing_activated
@@ -344,17 +351,22 @@ if current_trade_active and not na(last_entry_price) and not na(persistent_parti
             trailing_stop_level := math.min(trailing_stop_level, close + (last_stop_loss - last_entry_price) * trailing_distance)
         
         // Update stop loss line position to follow trailing stop
-        if show_risk_reward and show_stop_targets and not na(stop_loss_line) and not na(setup_bar)
+        bool show_rr = show_risk_reward
+        bool show_stops = show_stop_targets
+        bool has_stop_line = not na(stop_loss_line)
+        bool has_setup_bar = not na(setup_bar)
+        bool can_update_line = show_rr and show_stops and has_stop_line and has_setup_bar
+        if can_update_line
             line.set_xy2(stop_loss_line, setup_bar + 50, trailing_stop_level)
             line.set_xy1(stop_loss_line, setup_bar - 10, trailing_stop_level)
             label.set_xy(sl_label, setup_bar + 55, trailing_stop_level)
 
 // Breach Detection Logic - Always run regardless of label display
-if not na(swing_high)
-    high_breached := close > swing_high
+if not na(most_recent_high)
+    high_breached := close > most_recent_high
 
-if not na(swing_low)
-    low_breached := close < swing_low
+if not na(most_recent_low)
+    low_breached := close < most_recent_low
 
 // Create horizontal lines with labels for swing points (only if show_labels is enabled)
 if not na(swing_high) and show_labels
@@ -425,10 +437,19 @@ if show_risk_reward and show_stop_targets and new_setup_triggered
     new_setup_triggered := false
 
 // Show persistent profit target line if no new setup but we have a previous one
-if show_risk_reward and show_stop_targets and not new_setup_triggered and not na(last_take_profit)
+bool show_rr_persistent = show_risk_reward
+bool show_stops_persistent = show_stop_targets
+bool no_new_setup = not new_setup_triggered
+bool has_take_profit = not na(last_take_profit)
+bool show_persistent_lines = show_rr_persistent and show_stops_persistent and no_new_setup and has_take_profit
+if show_persistent_lines
     // Check if price has crossed the profit target or trailing stop
     bool profit_target_hit = (last_trade_signal == "LONG" and close >= last_take_profit) or (last_trade_signal == "SHORT" and close <= last_take_profit)
-    bool trailing_stop_hit = trailing_activated and not na(trailing_stop_level) and ((last_trade_signal == "LONG" and close <= trailing_stop_level) or (last_trade_signal == "SHORT" and close >= trailing_stop_level))
+    bool trail_active = trailing_activated
+bool has_trail_level = not na(trailing_stop_level)
+bool long_hit_trail = last_trade_signal == "LONG" and close <= trailing_stop_level
+bool short_hit_trail = last_trade_signal == "SHORT" and close >= trailing_stop_level
+bool trailing_stop_hit = trail_active and has_trail_level and (long_hit_trail or short_hit_trail)
     
     if profit_target_hit or trailing_stop_hit
         // Price has hit the profit target or trailing stop, remove the line and label
@@ -461,10 +482,10 @@ if show_risk_reward and show_stop_targets and not new_setup_triggered and not na
                     full_profit_achieved := (last_entry_price - trailing_stop_level) * (remaining_position_size / 100.0)
                     full_risk_taken := (last_stop_loss - last_entry_price) * (remaining_position_size / 100.0)
             
-            // Track full success and total profit
-            successful_trades := successful_trades + 1
+            // Update total success tracking
             total_profit_achieved := total_profit_achieved + full_profit_achieved
             total_risk_taken := total_risk_taken + full_risk_taken
+            successful_trades := successful_trades + 1
             
             current_trade_active := false
             max_pips_beyond_breakout := 0.0
@@ -557,24 +578,31 @@ if show_risk_reward
 
 
 
-// Breakout Alert Conditions
-// Alert when swing high line changes from teal to green (bullish breakout)
-if not na(swing_high)
-    if high_breached and not high_breached[1]
-        alert("BULLISH BREAKOUT - Price closed above swing high", alert.freq_once_per_bar)
+// Debug Visual Indicators - Show only on current bar (toggleable)
+bool debug_on = show_debug_symbols
+bool is_last_bar = barstate.islast
+bool has_high = not na(most_recent_high)
+bool close_above_high = close > most_recent_high
+bool prev_close_below_high = close[1] <= most_recent_high
+bool breakout_condition = close_above_high and prev_close_below_high
 
-// Alert when swing low line changes from gray to red (bearish breakdown)
-if not na(swing_low)
-    if low_breached and not low_breached[1]
-        alert("BEARISH BREAKDOWN - Price closed below swing low", alert.freq_once_per_bar)
+plotshape(debug_on and is_last_bar and has_high and close_above_high, title="Close > High", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.tiny)
+plotshape(debug_on and is_last_bar and has_high and prev_close_below_high, title="Close[1] <= High", location=location.abovebar, color=color.orange, style=shape.triangledown, size=size.tiny)
+plotshape(debug_on and is_last_bar and has_high and breakout_condition, title="BREAKOUT DETECTED", location=location.abovebar, color=color.red, style=shape.diamond, size=size.small)
 
-// Trailing Stop Alert
-if enable_trailing_stop and trailing_activated and not trailing_activated[1]
-    alert("TRAILING STOP ACTIVATED - Stop loss moved to " + str.tostring(trailing_stop_level, "#.#####"), alert.freq_once_per_bar)
+// Alert Conditions using alertcondition (alternative approach)
+bullish_breakout = not na(most_recent_high) and close > most_recent_high and close[1] <= most_recent_high
+bearish_breakdown = not na(most_recent_low) and close < most_recent_low and close[1] >= most_recent_low
+trailing_stop_activated = enable_trailing_stop and trailing_activated and not trailing_activated[1]
+
+alertcondition(bullish_breakout, title="Bullish Breakout", message="BULLISH BREAKOUT - Price closed above swing high")
+alertcondition(bearish_breakdown, title="Bearish Breakdown", message="BEARISH BREAKDOWN - Price closed below swing low")
+alertcondition(trailing_stop_activated, title="Trailing Stop Activated", message="TRAILING STOP ACTIVATED - Stop loss moved to new level")
+alertcondition(bullish_breakout, title="Test Alert", message="TEST ALERT - Red diamond condition met")
 
 
 
 
-
+ 
 
 
