@@ -1,39 +1,23 @@
 //@version=5
 indicator("WTT_Syzygy_Swing_Trader_Rev1", overlay=true)
 
-// =============================================================================
-// WTT_Syzygy_Swing_Trader - Revision History
-// =============================================================================
-//
-// R1.0 - Initial: Basic swing detection, trend analysis, horizontal lines
-// R1.1 - Colors: Teal/maroon scheme, visual consistency
-// R1.2 - Table: Added trend status table (removed in R1.3)
-// R1.3 - Cleanup: Removed table, simplified interface
-// R1.4 - Optimization: 7-bar lookback for 15min charts
-// R1.5 - Breakouts: Dynamic color changes (teal→green, gray→red)
-// R1.6 - Risk Management: Account size, position sizing, R:R ratios, natural stops
-// R1.7 - Targets: Persistent profit target lines until next breakout
-// R1.8 - Universal: Long/short setups work in all trend directions
-// R1.9 - Labels: Added "PT" labels to profit target lines (current line only)
-// R1.10 - Alerts: Synchronized breakout alerts with line color changes
-// R1.11 - Stop Loss: Added red dashed stop loss lines with "SL" labels
-// R1.12 - Colors: Vibrant lime/fuchsia scheme + enhanced R:R table with opposite levels
-// R1.13 - Colors: Updated to vibrant lime/deep pink RGB scheme for maximum impact
-// R1.14 - Bug Fix: Resolved NaN values in risk-reward calculations with proper error handling
-// R1.15 - Profit Maximization: Added partial profit taking and trailing stop loss functionality
-// R1.16 - Visual Enhancement: Orange trailing stop line with "TS" label when activated
-// R1.17 - Table Enhancement: Added "1 : " format to R:R ratios and persistent entry price
-// R1.18 - Success Tracking: Added success rate calculation and remaining position size
-// R1.19 - Alerts: Added trailing stop activation alert synchronized with table status
-// R1.20 - Code Cleanup: Removed unused variables and optimized script performance
-// R1.21 - Enhanced Success Rate: Added partial profit taking tracking, profit factor calculation, and weighted success metrics
-// R1.22 - Table optimization and clarity improvements
-// R1.23 - Table streamlining and pip distance correction
-// R1.24 - Enhanced UI: Fixed partial exit level recalculation, added strategy instructions to table with toggle control
-//
-// =============================================================================
+// WTT Syzygy Swing Trader - Revision History
 
-// R1.24 - Enhanced UI with strategy instructions and partial exit fixes
+// R1.0 - R1.27: Foundation & Core Features
+
+// The indicator evolved from basic swing detection to a comprehensive swing trading system. Key milestones included implementing 7-bar lookback pivot detection, dynamic color-changing breakout lines (lime green for bullish, deep pink for bearish), and persistent profit target/stop loss lines. The risk-reward table was added with live calculations, success rate tracking, and partial profit-taking logic. Visual enhancements included vibrant color schemes, theme toggles, and debug indicators. Alert systems were refined using `alertcondition` for reliable breakout notifications.
+
+// R1.28: Enhanced Table & Interface Optimization
+
+// Added RSI and Volume tracking to the risk-reward table with color-coded status indicators. RSI shows Overbought (red), Oversold (green), Bullish (green), Bearish (red), and Neutral (orange) states. Volume displays Weak (red), Normal (orange), and High (green) status. Implemented table toggle functionality and removed unused "Risk Per Trade Percentage" and "Account Size" inputs for a cleaner interface. Streamlined code by eliminating unused position sizing calculations and variables.
+
+// Future Revisions (R2.0+)
+
+// All future updates will be numbered R2.0 and above, with consolidated change descriptions in paragraph format for better readability and maintenance.
+
+// ---
+
+// Current version: R1.28 | Next version: R2.0** 
 
 // Input parameters
 lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
@@ -48,8 +32,7 @@ light_table_theme = input.bool(true, "Light Table Theme (Toggle for Dark)")
 show_debug_symbols = input.bool(false, "Show Debug Symbols")
 
 // Technical Indicators Inputs
-show_rsi_volume = input.bool(true, "Show RSI & Volume in Table")
-rsi_length = input.int(14, "RSI Length", minval=1, maxval=50)
+show_volume = input.bool(true, "Show Volume in Table")
 
 // Profit Maximization Inputs
 enable_partial_taking = input.bool(true, "Enable Partial Profit Taking")
@@ -482,7 +465,7 @@ if show_risk_reward and show_table
     color strategy_text = light_table_theme ? color.rgb(150, 150, 0) : color.rgb(255, 255, 150)
     color strategy_bg = light_table_theme ? color.rgb(255, 255, 220) : color.rgb(50, 50, 0)
     
-    var table rr_table = table.new(position.top_right, 2, show_rsi_volume ? 10 : 8, bgcolor=table_bg, border_width=2, border_color=color.rgb(100, 100, 150))
+    var table rr_table = table.new(position.top_right, 2, show_volume ? 9 : 8, bgcolor=table_bg, border_width=2, border_color=color.rgb(100, 100, 150))
     
     if barstate.islast
         // Header with gradient effect and emojis
@@ -537,33 +520,8 @@ if show_risk_reward and show_table
         table.cell(rr_table, 0, 7, "🎯 PM Status", text_color=header_text, bgcolor=header_bg)
         table.cell(rr_table, 1, 7, not na(partial_taken) ? "Partial: " + (partial_taken ? "Yes" : "No") + " | " + (trailing_activated ? "Trailing: Yes" : "Trailing: No") : "No PM", text_color=info_text, bgcolor=info_bg)
 
-        // RSI and Volume Information
-        if show_rsi_volume
-            // RSI calculation
-            float rsi_value = ta.rsi(close, rsi_length)
-            string rsi_status = "Neutral"
-            color rsi_color = info_text
-            
-            if not na(rsi_value)
-                if rsi_value > 70
-                    rsi_status := "Overbought"
-                    rsi_color := warning_text
-                else if rsi_value < 30
-                    rsi_status := "Oversold"
-                    rsi_color := success_text
-                else if rsi_value > 60
-                    rsi_status := "Bullish"
-                    rsi_color := success_text
-                else if rsi_value < 40
-                    rsi_status := "Bearish"
-                    rsi_color := warning_text
-                else
-                    rsi_status := "Neutral"
-                    rsi_color := info_text
-            
-            table.cell(rr_table, 0, 8, "📊 RSI", text_color=header_text, bgcolor=header_bg)
-            table.cell(rr_table, 1, 8, not na(rsi_value) ? rsi_status + " (" + str.tostring(rsi_value, "#.#") + ")" : "Loading...", text_color=rsi_color, bgcolor=info_bg)
-            
+        // Volume Information
+        if show_volume
             // Volume calculation (normalized to show relative volume)
             float avg_volume = ta.sma(volume, 20)
             float volume_ratio = avg_volume > 0 ? volume / avg_volume : 1.0
@@ -581,8 +539,8 @@ if show_risk_reward and show_table
                     volume_status := "Normal"
                     volume_color := light_table_theme ? color.rgb(255, 140, 0) : color.rgb(255, 165, 0)  // Orange color
             
-            table.cell(rr_table, 0, 9, "📈 Volume", text_color=header_text, bgcolor=header_bg)
-            table.cell(rr_table, 1, 9, not na(volume_ratio) ? volume_status : "Loading...", text_color=volume_color, bgcolor=info_bg)
+            table.cell(rr_table, 0, 8, "📈 Volume", text_color=header_text, bgcolor=header_bg)
+            table.cell(rr_table, 1, 8, not na(volume_ratio) ? volume_status + " (" + str.tostring(volume, "#") + ")" : "Loading...", text_color=volume_color, bgcolor=info_bg)
 
 
 
@@ -599,9 +557,6 @@ if not na(most_recent_low) and close < most_recent_low and close[1] >= most_rece
 plotshape(show_debug_symbols and barstate.islast and not na(most_recent_high) and close > most_recent_high, title="Close > High", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.tiny)
 plotshape(show_debug_symbols and barstate.islast and not na(most_recent_high) and close[1] <= most_recent_high, title="Close[1] <= High", location=location.abovebar, color=color.orange, style=shape.triangledown, size=size.tiny)
 plotshape(show_debug_symbols and barstate.islast and not na(most_recent_high) and close > most_recent_high and close[1] <= most_recent_high, title="BREAKOUT DETECTED", location=location.abovebar, color=color.red, style=shape.diamond, size=size.small)
-
-// RSI Debug Plot (temporary - remove after testing)
-plot(show_debug_symbols ? ta.rsi(close, rsi_length) : na, title="RSI Debug", color=color.purple, linewidth=2)
 
 // Test alert - should fire when red diamond appears
 if not na(most_recent_high) and close > most_recent_high and close[1] <= most_recent_high
