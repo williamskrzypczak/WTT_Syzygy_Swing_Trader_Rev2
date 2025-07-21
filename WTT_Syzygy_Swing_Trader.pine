@@ -349,11 +349,17 @@ if current_trade_active and not na(last_entry_price) and not na(persistent_parti
             line.set_xy1(stop_loss_line, setup_bar - 10, trailing_stop_level)
             label.set_xy(sl_label, setup_bar + 55, trailing_stop_level)
 
-// Create horizontal lines with labels for swing points
+// Breach Detection Logic - Always run regardless of label display
+if not na(swing_high)
+    high_breached := close > swing_high
+
+if not na(swing_low)
+    low_breached := close < swing_low
+
+// Create horizontal lines with labels for swing points (only if show_labels is enabled)
 if not na(swing_high) and show_labels
     line.delete(high_line)
     // Change color if price has closed above the line
-    high_breached := close > swing_high
     line_color = high_breached ? color.lime : color.teal
     high_line := line.new(swing_high_bar, swing_high, bar_index + 50, swing_high, color=line_color, width=2, style=line.style_solid)
     label.delete(high_label)
@@ -362,7 +368,6 @@ if not na(swing_high) and show_labels
 if not na(swing_low) and show_labels
     line.delete(low_line)
     // Change color if price has closed below the line
-    low_breached := close < swing_low
     line_color = low_breached ? color.rgb(255, 20, 147) : color.gray
     low_line := line.new(swing_low_bar, swing_low, bar_index + 50, swing_low, color=line_color, width=2, style=line.style_solid)
     label.delete(low_label)
@@ -554,12 +559,12 @@ if show_risk_reward
 
 // Breakout Alert Conditions
 // Alert when swing high line changes from teal to green (bullish breakout)
-if not na(swing_high) and show_labels
+if not na(swing_high)
     if high_breached and not high_breached[1]
         alert("BULLISH BREAKOUT - Price closed above swing high", alert.freq_once_per_bar)
 
 // Alert when swing low line changes from gray to red (bearish breakdown)
-if not na(swing_low) and show_labels
+if not na(swing_low)
     if low_breached and not low_breached[1]
         alert("BEARISH BREAKDOWN - Price closed below swing low", alert.freq_once_per_bar)
 
