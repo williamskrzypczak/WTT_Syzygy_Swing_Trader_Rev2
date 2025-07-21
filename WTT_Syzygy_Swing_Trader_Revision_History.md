@@ -60,13 +60,26 @@
 - Use persistent lines for clear entry, stop, and target.
 - Follow table and cheat sheet for live trade management and strategy rules.
 
+## Recent Updates (R1.28)
+
+- **Enhanced Table Features**
+  - Added RSI and Volume tracking rows with color-coded status indicators
+  - RSI displays: Overbought (red), Oversold (green), Bullish (green), Bearish (red), Neutral (orange)
+  - Volume displays: Weak (red), Normal (orange), High (green) with numerical ratios
+  - Added table toggle functionality to show/hide entire risk-reward table
+  - Removed unused "Risk Per Trade Percentage" and "Account Size" inputs for cleaner interface
+
+- **Code Optimization**
+  - Removed unused position sizing calculations and variables
+  - Streamlined input parameters to only include actively used settings
+  - Improved code efficiency by eliminating dead code paths
+
 ## Future Enhancements (Potential)
 - Multi-timeframe analysis
-- Volume confirmation
 - Advanced breakout filters
 - Custom profit target ratios
-- Risk-adjusted position sizing
+- Additional technical indicators
 
 ---
 
-**This revision history is consolidated and current through R1.27. For detailed per-version changes, refer to previous logs or commit history.** 
+**This revision history is consolidated and current through R1.28. For detailed per-version changes, refer to previous logs or commit history.** 
