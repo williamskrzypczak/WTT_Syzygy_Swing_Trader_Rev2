@@ -1,5 +1,6 @@
 //@version=5
-indicator("WTT_Syzygy_Swing_Trader_Rev1", overlay=true)
+indicator("WTT_Syzygy_Swing_Trader_Rev1.30", overlay=true)
+
 
 // =============================================================================
 // WTT SYZYGY SWING TRADER - REVISION HISTORY
@@ -33,19 +34,29 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1", overlay=true)
 // from 10 to 9 rows when volume is enabled, streamlining the interface while maintaining all 
 // essential trading information.
 
+// R1.30: ALERT ENHANCEMENTS & CODE ORGANIZATION
+// =============================================
+// Enhanced alert system with comprehensive trade information including symbol, current price, 
+// opposite swing price (suggested stop loss), and profit target. Removed test alerts and 
+// alertcondition() calls to streamline the alert system. Reorganized code structure with 
+// consistent 2-line spacing between major sections for improved readability and maintenance. 
+// Moved debug visual indicators to the bottom of the script for better logical organization.
+
 // FUTURE REVISIONS (R2.0+)
 // ========================
 // All future updates will be numbered R2.0 and above, with consolidated change descriptions 
 // in paragraph format for better readability and maintenance.
 
 // =============================================================================
-// CURRENT VERSION: R1.29 | NEXT VERSION: R2.0
+// CURRENT VERSION: R1.30 | NEXT VERSION: R2.0
 // ============================================================================= 
+
 
 // Input parameters
 lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
 show_labels = input.bool(true, "Show Labels")
 show_trend_lines = input.bool(true, "Show Trend Lines")
+
 
 // Risk-Reward Optimization Inputs
 show_risk_reward = input.bool(true, "Show Risk-Reward Analysis")
@@ -54,8 +65,10 @@ show_stop_targets = input.bool(true, "Show Stop Loss & Take Profit")
 light_table_theme = input.bool(true, "Light Table Theme (Toggle for Dark)")
 show_debug_symbols = input.bool(false, "Show Debug Symbols")
 
+
 // Technical Indicators Inputs
 show_volume = input.bool(true, "Show Volume in Table")
+
 
 // Profit Maximization Inputs
 enable_partial_taking = input.bool(true, "Enable Partial Profit Taking")
@@ -65,33 +78,40 @@ enable_trailing_stop = input.bool(true, "Enable Trailing Stop Loss")
 trailing_activation_ratio = input.float(0.5, "Trailing Stop Activation (R:R)", minval=0.25, maxval=1.0, step=0.1)
 trailing_distance = input.float(0.5, "Trailing Stop Distance (R:R)", minval=0.1, maxval=2.0, step=0.1)
 
+
 // Variables to store swing points
 var float swing_high = na
 var float swing_low = na
 var int swing_high_bar = na
 var int swing_low_bar = na
 
+
 // Variables to store the most recent swing points (these will persist)
 var float most_recent_high = na
 var float most_recent_low = na
 
+
 // Arrays to store historical swing points
 var array<float> swing_highs = array.new<float>()
 var array<float> swing_lows = array.new<float>()
-var array<int> swing_high_bars = array.new<int>()
-var array<int> swing_low_bars = array.new<int>()
+var array<int> swing_high_bars = array.new<int()
+var array<int> swing_low_bars = array.new<int()
+
 
 // Variables to track horizontal lines
 var line high_line = na
 var line low_line = na
 
+
 // Variables to track labels
 var label high_label = na
 var label low_label = na
 
+
 // Variables to track breakout states
 var bool high_breached = false
 var bool low_breached = false
+
 
 // Risk-Reward Optimization Variables
 var float entry_price = na
@@ -103,11 +123,13 @@ var float risk_reward_ratio = na
 var string trade_signal = na
 var bool new_setup_triggered = false
 
+
 // Variables to track persistent profit target lines
 var line profit_target_line = na
 var float last_take_profit = na
 var string last_trade_signal = na
 var label pt_label = na
+
 
 // Variables to track persistent stop loss lines
 var line stop_loss_line = na
@@ -115,10 +137,13 @@ var float last_stop_loss = na
 var label sl_label = na
 var int setup_bar = na
 
+
 // Variables to track persistent partial exit level
 var float persistent_partial_exit_level = na
 
+
 // Strategy instructions label
+
 
 // Success Rate Tracking Variables
 var int total_breaches = 0
@@ -133,12 +158,14 @@ var float persistent_entry_price = na
 var float trade_profit_achieved = 0.0
 var float trade_risk_taken = 0.0
 
+
 // Profit Maximization Variables
 var bool partial_taken = false
 var bool trailing_activated = false
 var float trailing_stop_level = na
 var float partial_exit_level = na
 var float remaining_position_size = 100.0
+
 
 // Detect swing high
 is_swing_high = ta.pivothigh(high, lookback, lookback)
@@ -154,6 +181,7 @@ if not na(is_swing_high)
         array.shift(swing_highs)
         array.shift(swing_high_bars)
 
+
 // Detect swing low
 is_swing_low = ta.pivotlow(low, lookback, lookback)
 if not na(is_swing_low)
@@ -167,6 +195,7 @@ if not na(is_swing_low)
     if array.size(swing_lows) > 5
         array.shift(swing_lows)
         array.shift(swing_low_bars)
+
 
 // Analyze patterns
 var string trend_status = "Sideways"
@@ -184,6 +213,7 @@ if array.size(swing_highs) >= 2 and array.size(swing_lows) >= 2
         trend_status := "↘️"
     else
         trend_status := "↔️"
+
 
 // Risk-Reward Optimization Logic - Only calculate on new breaches
 if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
@@ -286,12 +316,14 @@ if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
         risk_reward_ratio := na
         trade_signal := na
 
+
 // Track maximum price movement beyond breakout for active trades
 if current_trade_active and not na(entry_price)
     if last_trade_signal == "LONG"
         max_pips_beyond_breakout := math.max(max_pips_beyond_breakout, high)
     else if last_trade_signal == "SHORT"
         max_pips_beyond_breakout := math.min(max_pips_beyond_breakout, low)
+
 
 // Profit Maximization Logic - Partial Profit Taking and Trailing Stop
 if current_trade_active and not na(last_entry_price) and not na(persistent_partial_exit_level)
@@ -348,12 +380,14 @@ if current_trade_active and not na(last_entry_price) and not na(persistent_parti
             line.set_xy1(stop_loss_line, setup_bar - 10, trailing_stop_level)
             label.set_xy(sl_label, setup_bar + 55, trailing_stop_level)
 
+
 // Breach Detection Logic - Always run regardless of label display
 if not na(most_recent_high)
     high_breached := close > most_recent_high
 
 if not na(most_recent_low)
     low_breached := close < most_recent_low
+
 
 // Create horizontal lines with labels for swing points (only if show_labels is enabled)
 if not na(swing_high) and show_labels
@@ -372,6 +406,7 @@ if not na(swing_low) and show_labels
     label.delete(low_label)
     low_label := label.new(bar_index + 5, swing_low, trend_status, color=line_color, style=label.style_label_left, textcolor=color.white, size=size.large)
 
+
 // Draw trend lines
 if show_trend_lines and array.size(swing_highs) >= 2 and array.size(swing_lows) >= 2
     // High trend line
@@ -389,6 +424,7 @@ if show_trend_lines and array.size(swing_highs) >= 2 and array.size(swing_lows) 
     low2_price = array.get(swing_lows, array.size(swing_lows) - 1)
     
     line.new(low1_bar, low1_price, low2_bar, low2_price, color=color.gray, width=2)
+
 
 // Plot Risk-Reward Analysis - Create lines whenever a new breach occurs
 if show_risk_reward and show_stop_targets and new_setup_triggered
@@ -422,6 +458,7 @@ if show_risk_reward and show_stop_targets and new_setup_triggered
     
     // Reset the flag after lines are created
     new_setup_triggered := false
+
 
 // Show persistent profit target line if no new setup but we have a previous one
 if show_risk_reward and show_stop_targets and not new_setup_triggered and not na(last_take_profit)
@@ -472,6 +509,7 @@ if show_risk_reward and show_stop_targets and not new_setup_triggered and not na
             trailing_stop_level := na
             partial_exit_level := na
             persistent_partial_exit_level := na
+
 
 // Risk-Reward Ratio Table
 if show_risk_reward and show_table
@@ -566,37 +604,26 @@ if show_risk_reward and show_table
             table.cell(rr_table, 1, 8, not na(volume_ratio) ? volume_status + " (" + str.tostring(volume, "#") + "K)" : "Loading...", text_color=volume_color, bgcolor=info_bg)
 
 
-
 // Breakout Alert Conditions
 // Alert when swing high line changes from teal to green (bullish breakout)
 if not na(most_recent_high) and close > most_recent_high and close[1] <= most_recent_high
-    alert("BULLISH BREAKOUT - Price closed above swing high", alert.freq_once_per_bar)
+    alert("BULLISH BREAKOUT on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (low): " + str.tostring(most_recent_low, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed above swing high", alert.freq_once_per_bar)
+
 
 // Alert when swing low line changes from gray to red (bearish breakdown)
 if not na(most_recent_low) and close < most_recent_low and close[1] >= most_recent_low
-    alert("BEARISH BREAKDOWN - Price closed below swing low", alert.freq_once_per_bar)
+    alert("BEARISH BREAKDOWN on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (high): " + str.tostring(most_recent_high, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed below swing low", alert.freq_once_per_bar)
+
+
+// Trailing Stop Alert
+if enable_trailing_stop and trailing_activated and not trailing_activated[1]
+    alert("TRAILING STOP ACTIVATED on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " - Stop loss moved to " + str.tostring(trailing_stop_level, "#.#####"), alert.freq_once_per_bar)
+
 
 // Debug Visual Indicators - Show only on current bar (toggleable)
 plotshape(show_debug_symbols and barstate.islast and not na(most_recent_high) and close > most_recent_high, title="Close > High", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.tiny)
 plotshape(show_debug_symbols and barstate.islast and not na(most_recent_high) and close[1] <= most_recent_high, title="Close[1] <= High", location=location.abovebar, color=color.orange, style=shape.triangledown, size=size.tiny)
 plotshape(show_debug_symbols and barstate.islast and not na(most_recent_high) and close > most_recent_high and close[1] <= most_recent_high, title="BREAKOUT DETECTED", location=location.abovebar, color=color.red, style=shape.diamond, size=size.small)
-
-// Test alert - should fire when red diamond appears
-if not na(most_recent_high) and close > most_recent_high and close[1] <= most_recent_high
-    alert("TEST ALERT - Red diamond condition met", alert.freq_once_per_bar)
-
-// Trailing Stop Alert
-if enable_trailing_stop and trailing_activated and not trailing_activated[1]
-    alert("TRAILING STOP ACTIVATED - Stop loss moved to " + str.tostring(trailing_stop_level, "#.#####"), alert.freq_once_per_bar)
-
-// Alert Conditions using alertcondition (alternative approach)
-bullish_breakout = not na(most_recent_high) and close > most_recent_high and close[1] <= most_recent_high
-bearish_breakdown = not na(most_recent_low) and close < most_recent_low and close[1] >= most_recent_low
-
-alertcondition(bullish_breakout, title="Bullish Breakout", message="BULLISH BREAKOUT - Price closed above swing high")
-alertcondition(bearish_breakdown, title="Bearish Breakdown", message="BEARISH BREAKDOWN - Price closed below swing low")
-alertcondition(bullish_breakout, title="Test Alert", message="TEST ALERT - Red diamond condition met")
-
 
 
 
