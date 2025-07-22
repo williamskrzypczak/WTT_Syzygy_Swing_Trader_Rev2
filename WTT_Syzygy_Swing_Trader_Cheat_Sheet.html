@@ -309,7 +309,7 @@
     <div class="header-banner">
         <h1>WTT Syzygy Swing Trader</h1>
         <div class="subtitle">Quick Reference Guide</div>
-        <div class="version">R1.24</div>
+        <div class="version">R1.30</div>
     </div>
     
     <div class="container">
@@ -323,7 +323,7 @@
                 </div>
                 <div class="step-item">
                     <h3>2. Configure</h3>
-                    <p>Set lookback (7), risk (1%), account size</p>
+                    <p>Set lookback (7), enable alerts</p>
                 </div>
                 <div class="step-item">
                     <h3>3. Watch</h3>
@@ -362,7 +362,7 @@
                     </li>
                     <li>
                         <div class="icon success">✓</div>
-                        <span><strong>Smart Alerts:</strong> Real-time notifications</span>
+                        <span><strong>Enhanced Alerts:</strong> Comprehensive trade information</span>
                     </li>
                 </ul>
             </div>
@@ -376,11 +376,7 @@
                     </li>
                     <li>
                         <div class="icon info">💰</div>
-                        <span><strong>Risk:</strong> 1.0% per trade</span>
-                    </li>
-                    <li>
-                        <div class="icon info">🏦</div>
-                        <span><strong>Account:</strong> $10,000 base</span>
+                        <span><strong>Risk-Reward:</strong> 1:1 ratio targets</span>
                     </li>
                     <li>
                         <div class="icon info">🎯</div>
@@ -389,6 +385,10 @@
                     <li>
                         <div class="icon info">📈</div>
                         <span><strong>Trailing:</strong> Activates at 0.5 R:R</span>
+                    </li>
+                    <li>
+                        <div class="icon info">📊</div>
+                        <span><strong>Volume:</strong> Optional table display</span>
                     </li>
                 </ul>
             </div>
@@ -476,7 +476,7 @@
                     </div>
                     <div class="color-swatch swatch-orange">
                         <span>🟠</span>
-                        <span>Orange - Partial Exit Level</span>
+                        <span>Orange - Trailing Stop Active</span>
                     </div>
                 </div>
                 <div class="alert-box">
@@ -524,34 +524,41 @@
                     </li>
                     <li>
                         <div class="icon info">💼</div>
-                        <span><strong>Position Size:</strong> Calculated based on risk</span>
+                        <span><strong>Position Size:</strong> Remaining position percentage</span>
+                    </li>
+                    <li>
+                        <div class="icon info">📊</div>
+                        <span><strong>Volume Status:</strong> High/Normal/Weak with actual volume</span>
                     </li>
                 </ul>
             </div>
         </div>
 
-        <!-- Alerts & Tips -->
+        <!-- Enhanced Alerts & Tips -->
         <div class="grid">
             <div class="card">
-                <h2>🔔 Alerts</h2>
+                <h2>🔔 Enhanced Alerts</h2>
                 <ul class="feature-list">
                     <li>
                         <div class="icon info">🔔</div>
-                        <span><strong>Breakout:</strong> Lime green signal</span>
+                        <span><strong>Breakout Alert:</strong> Symbol, price, stop loss, profit target</span>
                     </li>
                     <li>
                         <div class="icon info">🔔</div>
-                        <span><strong>Breakdown:</strong> Deep pink signal</span>
+                        <span><strong>Breakdown Alert:</strong> Symbol, price, stop loss, profit target</span>
                     </li>
                     <li>
                         <div class="icon info">🔔</div>
-                        <span><strong>Trailing Stop:</strong> When activated</span>
+                        <span><strong>Trailing Stop:</strong> When activated with new stop level</span>
                     </li>
                     <li>
-                        <div class="icon info">🔔</div>
-                        <span><strong>Partial Exit:</strong> When 50% closes</span>
+                        <div class="icon info">📱</div>
+                        <span><strong>Format:</strong> "BULLISH BREAKOUT on EURUSD at 1.23456 | Opposite swing (low): 1.23000 (suggested stop loss) | Profit target: 1.23912"</span>
                     </li>
                 </ul>
+                <div class="success-box">
+                    <strong>🎯 Alert Information:</strong> Each alert includes symbol, current price, suggested stop loss level, and profit target for complete trade setup!
+                </div>
             </div>
 
             <div class="card">
@@ -577,13 +584,17 @@
                         <div class="icon purple">💎</div>
                         <span>Monitor success rate</span>
                     </li>
+                    <li>
+                        <div class="icon purple">💎</div>
+                        <span>Set up alerts for real-time notifications</span>
+                    </li>
                 </ul>
             </div>
         </div>
 
         <!-- Footer -->
         <div class="footer">
-            <p>🎯 <strong>WTT Syzygy Swing Trader R1.24</strong> - Your Swing Trading Companion</p>
+            <p>🎯 <strong>WTT Syzygy Swing Trader R1.30</strong> - Your Swing Trading Companion</p>
             <p>💡 Always backtest before live trading!</p>
         </div>
     </div>
