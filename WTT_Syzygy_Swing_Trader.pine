@@ -51,13 +51,25 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1.31", overlay=true)
 // deviation to determine High (>1.0 z-score), Weak (<-1.0 z-score), and Normal (-1.0 to 1.0 
 // z-score) volume status, providing more statistically sound and adaptive volume analysis.
 
+// R1.32: VOLUME ALERT SYSTEM IMPLEMENTATION
+// =========================================
+// Added comprehensive volume alert system with dual functionality for both high and low volume 
+// detection. High volume alerts trigger when volume exceeds 1.0 z-score above 20-period average, 
+// indicating increased market activity and potential trend continuation or reversal. Low volume 
+// alerts trigger when volume falls below -1.0 z-score, indicating decreased market activity and 
+// potential consolidation or indecision. Both alerts include detailed information: symbol, current 
+// price, actual volume in thousands, z-score value, and market context. Alerts are conditionally 
+// activated only when "Show Volume in Table" option is enabled, maintaining consistency with 
+// existing volume analysis features. Implementation reuses existing volume calculations for 
+// optimal performance without additional computational overhead.
+
 // FUTURE REVISIONS (R2.0+)
 // ========================
 // All future updates will be numbered R2.0 and above, with consolidated change descriptions 
 // in paragraph format for better readability and maintenance.
 
 // =============================================================================
-// CURRENT VERSION: R1.31 | NEXT VERSION: R2.0
+// CURRENT VERSION: R1.32 | NEXT VERSION: R2.0
 // ============================================================================= 
 
 
@@ -628,6 +640,20 @@ if not na(most_recent_low) and close < most_recent_low and close[1] >= most_rece
 // Trailing Stop Alert
 if enable_trailing_stop and trailing_activated and not trailing_activated[1]
     alert("TRAILING STOP ACTIVATED on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " - Stop loss moved to " + str.tostring(trailing_stop_level, "#.#####") + ". According to the indicator's strategy, this is a suggested point to close 50% (half) of your position.", alert.freq_once_per_bar)
+
+
+// High Volume Alert
+if show_volume
+    float avg_volume = ta.sma(volume, 20)
+    float vol_std = ta.stdev(volume, 20)
+    float volume_z_score = vol_std > 0 ? (volume - avg_volume) / vol_std : 0.0
+    
+    if not na(volume_z_score) and volume_z_score > 1.0
+        alert("HIGH VOLUME DETECTED on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " - Volume: " + str.tostring(volume, "#") + "K (Z-Score: " + str.tostring(volume_z_score, "#.##") + ") - This may indicate increased market activity and potential trend continuation or reversal.", alert.freq_once_per_bar)
+    
+    // Low Volume Alert
+    if not na(volume_z_score) and volume_z_score < -1.0
+        alert("LOW VOLUME DETECTED on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " - Volume: " + str.tostring(volume, "#") + "K (Z-Score: " + str.tostring(volume_z_score, "#.##") + ") - This may indicate decreased market activity and potential consolidation or indecision.", alert.freq_once_per_bar)
 
 
 // Debug Visual Indicators - Show only on current bar (toggleable)
