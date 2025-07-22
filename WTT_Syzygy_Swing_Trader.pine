@@ -1,5 +1,5 @@
 //@version=5
-indicator("WTT_Syzygy_Swing_Trader_Rev1.30", overlay=true)
+indicator("WTT_Syzygy_Swing_Trader_Rev1.31", overlay=true)
 
 
 // =============================================================================
@@ -42,13 +42,22 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1.30", overlay=true)
 // consistent 2-line spacing between major sections for improved readability and maintenance. 
 // Moved debug visual indicators to the bottom of the script for better logical organization.
 
+// R1.31: TRAILING STOP ALERT ENHANCEMENT & VOLUME CALCULATION IMPROVEMENT
+// ======================================================================
+// Enhanced trailing stop alert to include strategic position management suggestion: "According 
+// to the indicator's strategy, this is a suggested point to close 50% (half) of your position." 
+// Improved volume calculation method from simple ratio comparison to statistical standard 
+// deviation analysis using z-scores. New volume classification uses 20-period SMA and standard 
+// deviation to determine High (>1.0 z-score), Weak (<-1.0 z-score), and Normal (-1.0 to 1.0 
+// z-score) volume status, providing more statistically sound and adaptive volume analysis.
+
 // FUTURE REVISIONS (R2.0+)
 // ========================
 // All future updates will be numbered R2.0 and above, with consolidated change descriptions 
 // in paragraph format for better readability and maintenance.
 
 // =============================================================================
-// CURRENT VERSION: R1.30 | NEXT VERSION: R2.0
+// CURRENT VERSION: R1.31 | NEXT VERSION: R2.0
 // ============================================================================= 
 
 
@@ -94,8 +103,8 @@ var float most_recent_low = na
 // Arrays to store historical swing points
 var array<float> swing_highs = array.new<float>()
 var array<float> swing_lows = array.new<float>()
-var array<int> swing_high_bars = array.new<int()
-var array<int> swing_low_bars = array.new<int()
+var array<int> swing_high_bars = array.new<int>()
+var array<int> swing_low_bars = array.new<int>()
 
 
 // Variables to track horizontal lines
@@ -583,17 +592,18 @@ if show_risk_reward and show_table
 
         // Volume Information
         if show_volume
-            // Volume calculation (normalized to show relative volume)
+            // Volume calculation using standard deviation
             float avg_volume = ta.sma(volume, 20)
-            float volume_ratio = avg_volume > 0 ? volume / avg_volume : 1.0
+            float vol_std = ta.stdev(volume, 20)
+            float volume_z_score = vol_std > 0 ? (volume - avg_volume) / vol_std : 0.0
             string volume_status = "Normal"
             color volume_color = light_table_theme ? color.rgb(255, 140, 0) : color.rgb(255, 165, 0)  // Orange color
             
-            if not na(volume_ratio)
-                if volume_ratio > 1.5
+            if not na(volume_z_score)
+                if volume_z_score > 1.0
                     volume_status := "High"
                     volume_color := success_text
-                else if volume_ratio < 0.5
+                else if volume_z_score < -1.0
                     volume_status := "Weak"
                     volume_color := warning_text
                 else
@@ -601,7 +611,7 @@ if show_risk_reward and show_table
                     volume_color := light_table_theme ? color.rgb(255, 140, 0) : color.rgb(255, 165, 0)  // Orange color
             
             table.cell(rr_table, 0, 8, "📈 Volume", text_color=header_text, bgcolor=header_bg)
-            table.cell(rr_table, 1, 8, not na(volume_ratio) ? volume_status + " (" + str.tostring(volume, "#") + "K)" : "Loading...", text_color=volume_color, bgcolor=info_bg)
+            table.cell(rr_table, 1, 8, not na(volume_z_score) ? volume_status + " (" + str.tostring(volume, "#") + "K)" : "Loading...", text_color=volume_color, bgcolor=info_bg)
 
 
 // Breakout Alert Conditions
@@ -617,7 +627,7 @@ if not na(most_recent_low) and close < most_recent_low and close[1] >= most_rece
 
 // Trailing Stop Alert
 if enable_trailing_stop and trailing_activated and not trailing_activated[1]
-    alert("TRAILING STOP ACTIVATED on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " - Stop loss moved to " + str.tostring(trailing_stop_level, "#.#####"), alert.freq_once_per_bar)
+    alert("TRAILING STOP ACTIVATED on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " - Stop loss moved to " + str.tostring(trailing_stop_level, "#.#####") + ". According to the indicator's strategy, this is a suggested point to close 50% (half) of your position.", alert.freq_once_per_bar)
 
 
 // Debug Visual Indicators - Show only on current bar (toggleable)
