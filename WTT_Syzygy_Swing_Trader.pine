@@ -86,24 +86,13 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1.31", overlay=true)
 // streamlining improves the user experience by reducing alert fatigue and focusing on 
 // high-probability trading setups.
 
-// R1.35: VOLUME FILTER BUG FIX & ENHANCED DISPLAY
-// ===============================================
-// Fixed critical bug in volume filtering logic where signals were incorrectly triggering when 
-// volume z-score was below the threshold. Added proper threshold validation check 
-// `not na(volume_filter_threshold)` to ensure both volume z-score and threshold are valid 
-// before comparison. Enhanced volume filter table display to show current z-score value 
-// alongside threshold and status (PASS/BLOCK), providing better transparency and debugging 
-// capabilities. Fixed logic applied consistently across breakout detection, alert conditions, 
-// and table display. This ensures volume filtering works correctly and provides accurate 
-// feedback to users about why signals are being blocked or allowed.
-
 // FUTURE REVISIONS (R2.0+)
 // ========================
 // All future updates will be numbered R2.0 and above, with consolidated change descriptions 
 // in paragraph format for better readability and maintenance.
 
 // =============================================================================
-// CURRENT VERSION: R1.35 | NEXT VERSION: R2.0
+// CURRENT VERSION: R1.34 | NEXT VERSION: R2.0
 // ============================================================================= 
 
 
@@ -281,7 +270,7 @@ if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
     float avg_volume = ta.sma(volume, 20)
     float vol_std = ta.stdev(volume, 20)
     float volume_z_score = vol_std > 0 ? (volume - avg_volume) / vol_std : 0.0
-    bool volume_filter_passed = not enable_volume_filter or (not na(volume_z_score) and not na(volume_filter_threshold) and volume_z_score >= volume_filter_threshold)
+    bool volume_filter_passed = not enable_volume_filter or (not na(volume_z_score) and volume_z_score >= volume_filter_threshold)
     
     // Check for new breaches - any breach should trigger new lines
     bool new_long_breach = close > most_recent_high and close[1] <= most_recent_high and (na(entry_price) or trade_signal != "LONG") and volume_filter_passed
@@ -669,12 +658,12 @@ if show_risk_reward and show_table
             
             // Volume Filter Status
             if enable_volume_filter
-                bool volume_filter_active = not na(volume_z_score) and not na(volume_filter_threshold) and volume_z_score >= volume_filter_threshold
+                bool volume_filter_active = not na(volume_z_score) and volume_z_score >= volume_filter_threshold
                 string filter_status = volume_filter_active ? "✅ PASS" : "❌ BLOCK"
                 color filter_color = volume_filter_active ? success_text : warning_text
                 
                 table.cell(rr_table, 0, 9, "🔍 Volume Filter", text_color=header_text, bgcolor=header_bg)
-                table.cell(rr_table, 1, 9, "Threshold: " + str.tostring(volume_filter_threshold, "#.#") + " | Current: " + str.tostring(volume_z_score, "#.##") + " | " + filter_status, text_color=filter_color, bgcolor=info_bg)
+                table.cell(rr_table, 1, 9, "Threshold: " + str.tostring(volume_filter_threshold, "#.#") + " | " + filter_status, text_color=filter_color, bgcolor=info_bg)
 
 
 // Breakout Alert Conditions
@@ -684,7 +673,7 @@ if not na(most_recent_high) and close > most_recent_high and close[1] <= most_re
     float alert_avg_volume = ta.sma(volume, 20)
     float alert_vol_std = ta.stdev(volume, 20)
     float alert_volume_z_score = alert_vol_std > 0 ? (volume - alert_avg_volume) / alert_vol_std : 0.0
-    bool alert_volume_filter_passed = not enable_volume_filter or (not na(alert_volume_z_score) and not na(volume_filter_threshold) and alert_volume_z_score >= volume_filter_threshold)
+    bool alert_volume_filter_passed = not enable_volume_filter or (not na(alert_volume_z_score) and alert_volume_z_score >= volume_filter_threshold)
     
     if alert_volume_filter_passed
         alert("BULLISH BREAKOUT on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (low): " + str.tostring(most_recent_low, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed above swing high" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : ""), alert.freq_once_per_bar)
@@ -696,7 +685,7 @@ if not na(most_recent_low) and close < most_recent_low and close[1] >= most_rece
     float alert_avg_volume = ta.sma(volume, 20)
     float alert_vol_std = ta.stdev(volume, 20)
     float alert_volume_z_score = alert_vol_std > 0 ? (volume - alert_avg_volume) / alert_vol_std : 0.0
-    bool alert_volume_filter_passed = not enable_volume_filter or (not na(alert_volume_z_score) and not na(volume_filter_threshold) and alert_volume_z_score >= volume_filter_threshold)
+    bool alert_volume_filter_passed = not enable_volume_filter or (not na(alert_volume_z_score) and alert_volume_z_score >= volume_filter_threshold)
     
     if alert_volume_filter_passed
         alert("BEARISH BREAKDOWN on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (high): " + str.tostring(most_recent_high, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed below swing low" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : ""), alert.freq_once_per_bar)
