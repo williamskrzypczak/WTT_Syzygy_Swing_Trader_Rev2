@@ -1,5 +1,5 @@
 //@version=5
-indicator("WTT_Syzygy_Swing_Trader_Rev1.36", overlay=true)
+indicator("WTT_Syzygy_Swing_Trader_Rev1.37", overlay=true)
 
 
 // =============================================================================
@@ -105,13 +105,25 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1.36", overlay=true)
 // readability and reduced visual clutter while preserving functionality. Table now displays 
 // more information in less space, making it easier to scan and interpret at a glance.
 
+// R1.37: RSI INTEGRATION & ENHANCED TECHNICAL ANALYSIS
+// ===================================================
+// Added comprehensive RSI (Relative Strength Index) integration to the HUD table with 
+// configurable length parameter (default 14 periods). RSI display includes both numerical 
+// value and status classification: Overbought (≥70), Oversold (≤30), Bullish (>50), 
+// Bearish (<50), and Neutral (=50). Color-coded status indicators provide instant visual 
+// feedback: red for overbought/bearish, green for oversold/bullish, orange for neutral. 
+// Added "Show RSI in Table" toggle for optional display and "RSI Length" input for 
+// customization. Table dynamically adjusts size to accommodate RSI row when enabled, 
+// providing traders with additional momentum analysis alongside existing volume and 
+// position management data.
+
 // FUTURE REVISIONS (R2.0+)
 // ========================
 // All future updates will be numbered R2.0 and above, with consolidated change descriptions 
 // in paragraph format for better readability and maintenance.
 
 // =============================================================================
-// CURRENT VERSION: R1.36 | NEXT VERSION: R2.0
+// CURRENT VERSION: R1.37 | NEXT VERSION: R2.0
 // ============================================================================= 
 
 
@@ -133,6 +145,8 @@ show_debug_symbols = input.bool(false, "Show Debug Symbols")
 show_volume = input.bool(true, "Show Volume in Table")
 enable_volume_filter = input.bool(false, "Enable Volume Filter for Breakouts")
 volume_filter_threshold = input.float(0.0, "Volume Filter Threshold (Z-Score)", minval=-2.0, maxval=2.0, step=0.1, tooltip="Only take breakouts when volume z-score is above this threshold. 0.0 = average volume, 1.0 = high volume, -1.0 = low volume")
+show_rsi = input.bool(true, "Show RSI in Table")
+rsi_length = input.int(14, "RSI Length", minval=1, maxval=50)
 
 
 // Profit Maximization Inputs
@@ -597,12 +611,12 @@ if show_risk_reward and show_table
     color strategy_text = light_table_theme ? color.rgb(150, 150, 0) : color.rgb(255, 255, 150)
     color strategy_bg = light_table_theme ? color.rgb(255, 255, 220) : color.rgb(50, 50, 0)
     
-    var table rr_table = table.new(position.top_right, 2, show_volume ? (enable_volume_filter ? 6 : 5) : 4, bgcolor=table_bg, border_width=2, border_color=color.rgb(100, 100, 150))
+    var table rr_table = table.new(position.top_right, 2, show_volume ? (enable_volume_filter ? (show_rsi ? 7 : 6) : (show_rsi ? 6 : 5)) : (show_rsi ? 5 : 4), bgcolor=table_bg, border_width=2, border_color=color.rgb(100, 100, 150))
     
     if barstate.islast
         // Header with gradient effect and emojis
-        table.cell(rr_table, 0, 0, "🔥 HEADS UP DISPLAY", text_color=color.white, bgcolor=color.rgb(60, 20, 80), text_size=size.small)
-        table.cell(rr_table, 1, 0, "HUD 🔥", text_color=color.white, bgcolor=color.rgb(60, 20, 80), text_size=size.small)
+        table.cell(rr_table, 0, 0, "🔥 HEADS UP DISPLAY", text_color=color.white, bgcolor=color.rgb(60, 20, 80), text_size=size.large)
+        table.cell(rr_table, 1, 0, "HUD 🔥", text_color=color.white, bgcolor=color.rgb(60, 20, 80), text_size=size.large)
         
         // Signal & R:R Ratio combined
         float current_rr = na
@@ -683,6 +697,35 @@ if show_risk_reward and show_table
             
             table.cell(rr_table, 0, 5, "📈 Volume & Filter", text_color=header_text, bgcolor=header_bg)
             table.cell(rr_table, 1, 5, volume_filter_text, text_color=volume_color, bgcolor=info_bg)
+
+        // RSI Information
+        if show_rsi
+            float current_rsi = ta.rsi(close, rsi_length)
+            string rsi_status = "Neutral"
+            color rsi_color = light_table_theme ? color.rgb(255, 140, 0) : color.rgb(255, 165, 0)  // Orange color
+            
+            if not na(current_rsi)
+                if current_rsi >= 70
+                    rsi_status := "Overbought"
+                    rsi_color := warning_text
+                else if current_rsi <= 30
+                    rsi_status := "Oversold"
+                    rsi_color := success_text
+                else if current_rsi > 50
+                    rsi_status := "Bullish"
+                    rsi_color := success_text
+                else if current_rsi < 50
+                    rsi_status := "Bearish"
+                    rsi_color := warning_text
+                else
+                    rsi_status := "Neutral"
+                    rsi_color := light_table_theme ? color.rgb(255, 140, 0) : color.rgb(255, 165, 0)  // Orange color
+            
+            string rsi_text = not na(current_rsi) ? rsi_status + " (" + str.tostring(current_rsi, "#.#") + ")" : "Loading..."
+            
+            int rsi_row = show_volume ? (enable_volume_filter ? 6 : 5) : 4
+            table.cell(rr_table, 0, rsi_row, "📊 RSI", text_color=header_text, bgcolor=header_bg)
+            table.cell(rr_table, 1, rsi_row, rsi_text, text_color=rsi_color, bgcolor=info_bg)
 
 
 // Breakout Alert Conditions
