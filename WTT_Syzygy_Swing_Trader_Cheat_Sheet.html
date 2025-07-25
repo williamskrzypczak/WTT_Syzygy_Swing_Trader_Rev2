@@ -310,7 +310,7 @@
     <div class="header-banner">
         <h1>WTT Syzygy Swing Trader</h1>
         <div class="subtitle">Quick Reference Guide</div>
-        <div class="version">R1.33</div>
+        <div class="version">R1.38</div>
     </div>
     
     <div class="container">
@@ -368,6 +368,10 @@
                     <li>
                         <div class="icon info">🔍</div>
                         <span><strong>Volume Filter:</strong> Optional breakout filtering</span>
+                    </li>
+                    <li>
+                        <div class="icon info">📊</div>
+                        <span><strong>RSI Integration:</strong> Momentum analysis in HUD</span>
                     </li>
                 </ul>
             </div>
@@ -429,7 +433,7 @@
                     </div>
                 </div>
                 <div class="success-box">
-                    <strong>📊 Table Shows:</strong> Entry, Stop, Target, R:R Ratio, Success Rate, Volume Status, Filter Status
+                    <strong>📊 HUD Table Shows:</strong> Signal & R:R, Entry & Distance, Success Rate, Position & PM, Volume & Filter, RSI Status
                 </div>
             </div>
         </div>
@@ -478,6 +482,40 @@
             </div>
         </div>
 
+        <!-- RSI Integration Section -->
+        <div class="card">
+            <h2>📊 RSI Integration</h2>
+            <ul class="feature-list">
+                <li>
+                    <div class="icon info">📊</div>
+                    <span><strong>RSI Display:</strong> Shows in HUD table with status</span>
+                </li>
+                <li>
+                    <div class="icon success">🟢</div>
+                    <span><strong>Oversold:</strong> RSI ≤ 30 (bright green)</span>
+                </li>
+                <li>
+                    <div class="icon success">🟢</div>
+                    <span><strong>Bullish:</strong> RSI > 50 (darker green)</span>
+                </li>
+                <li>
+                    <div class="icon warning">🔴</div>
+                    <span><strong>Bearish:</strong> RSI < 50 (darker red)</span>
+                </li>
+                <li>
+                    <div class="icon warning">🔴</div>
+                    <span><strong>Overbought:</strong> RSI ≥ 70 (bright red)</span>
+                </li>
+                <li>
+                    <div class="icon info">🟠</div>
+                    <span><strong>Neutral:</strong> RSI = 50 (orange)</span>
+                </li>
+            </ul>
+            <div class="success-box">
+                <strong>💡 Bright colors signal extreme conditions (reversal opportunities), darker colors show moderate momentum!</strong>
+            </div>
+        </div>
+
         <!-- Alerts & Tips -->
         <div class="grid">
             <div class="card">
@@ -507,6 +545,10 @@
                         <div class="icon purple">💎</div>
                         <span>Monitor success rate and use partial exits</span>
                     </li>
+                    <li>
+                        <div class="icon purple">💎</div>
+                        <span>Enhanced HUD header for better visibility</span>
+                    </li>
                 </ul>
                 <div class="success-box">
                     <strong>🎯 Complete trade setup info in every alert!</strong>
@@ -516,7 +558,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p>🎯 <strong>WTT Syzygy Swing Trader R1.33</strong> - Your Swing Trading Companion</p>
+            <p>🎯 <strong>WTT Syzygy Swing Trader R1.38</strong> - Your Swing Trading Companion</p>
             <p>💡 Always backtest before live trading!</p>
         </div>
     </div>

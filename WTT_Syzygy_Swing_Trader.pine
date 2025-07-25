@@ -137,13 +137,13 @@ show_trend_lines = input.bool(true, "Show Trend Lines")
 show_risk_reward = input.bool(true, "Show Risk-Reward Analysis")
 show_table = input.bool(true, "Show Table")
 show_stop_targets = input.bool(true, "Show Stop Loss & Take Profit")
-light_table_theme = input.bool(true, "Light Table Theme (Toggle for Dark)")
+light_table_theme = input.bool(false, "Light Table Theme (Toggle for Dark)")
 show_debug_symbols = input.bool(false, "Show Debug Symbols")
 
 
 // Technical Indicators Inputs
 show_volume = input.bool(true, "Show Volume in Table")
-enable_volume_filter = input.bool(false, "Enable Volume Filter for Breakouts")
+enable_volume_filter = input.bool(true, "Enable Volume Filter for Breakouts")
 volume_filter_threshold = input.float(0.0, "Volume Filter Threshold (Z-Score)", minval=-2.0, maxval=2.0, step=0.1, tooltip="Only take breakouts when volume z-score is above this threshold. 0.0 = average volume, 1.0 = high volume, -1.0 = low volume")
 show_rsi = input.bool(true, "Show RSI in Table")
 rsi_length = input.int(14, "RSI Length", minval=1, maxval=50)
@@ -244,6 +244,8 @@ var bool trailing_activated = false
 var float trailing_stop_level = na
 var float partial_exit_level = na
 var float remaining_position_size = 100.0
+
+
 
 
 // Detect swing high
@@ -479,7 +481,7 @@ if not na(swing_high) and show_labels
     line.delete(high_line)
     // Change color if price has closed above the line
     line_color = high_breached ? color.lime : color.teal
-    high_line := line.new(swing_high_bar, swing_high, bar_index + 50, swing_high, color=line_color, width=2, style=line.style_solid)
+    high_line := line.new(swing_high_bar, swing_high, bar_index + 20, swing_high, color=line_color, width=2, style=line.style_solid)
     label.delete(high_label)
     high_label := label.new(bar_index + 5, swing_high, trend_status, color=line_color, style=label.style_label_left, textcolor=color.white, size=size.large)
 
@@ -487,7 +489,7 @@ if not na(swing_low) and show_labels
     line.delete(low_line)
     // Change color if price has closed below the line
     line_color = low_breached ? color.rgb(255, 20, 147) : color.gray
-    low_line := line.new(swing_low_bar, swing_low, bar_index + 50, swing_low, color=line_color, width=2, style=line.style_solid)
+    low_line := line.new(swing_low_bar, swing_low, bar_index + 20, swing_low, color=line_color, width=2, style=line.style_solid)
     label.delete(low_label)
     low_label := label.new(bar_index + 5, swing_low, trend_status, color=line_color, style=label.style_label_left, textcolor=color.white, size=size.large)
 
@@ -596,6 +598,9 @@ if show_risk_reward and show_stop_targets and not new_setup_triggered and not na
             persistent_partial_exit_level := na
 
 
+// RSI Calculation (moved before table for faster loading)
+float rsi_value = show_rsi ? ta.rsi(close, rsi_length) : na
+
 // Risk-Reward Ratio Table
 if show_risk_reward and show_table
     // Theme-based colors
@@ -700,28 +705,27 @@ if show_risk_reward and show_table
 
         // RSI Information
         if show_rsi
-            float current_rsi = ta.rsi(close, rsi_length)
             string rsi_status = "Neutral"
             color rsi_color = light_table_theme ? color.rgb(255, 140, 0) : color.rgb(255, 165, 0)  // Orange color
             
-            if not na(current_rsi)
-                if current_rsi >= 70
+            if not na(rsi_value)
+                if rsi_value >= 70
                     rsi_status := "Overbought"
-                    rsi_color := warning_text
-                else if current_rsi <= 30
+                    rsi_color := light_table_theme ? color.rgb(255, 0, 0) : color.rgb(255, 50, 50)  // Bright red for overbought
+                else if rsi_value <= 30
                     rsi_status := "Oversold"
-                    rsi_color := success_text
-                else if current_rsi > 50
+                    rsi_color := light_table_theme ? color.rgb(0, 255, 0) : color.rgb(50, 255, 50)  // Bright green for oversold
+                else if rsi_value > 50
                     rsi_status := "Bullish"
-                    rsi_color := success_text
-                else if current_rsi < 50
+                    rsi_color := light_table_theme ? color.rgb(0, 150, 0) : color.rgb(0, 200, 0)  // Darker green for bullish
+                else if rsi_value < 50
                     rsi_status := "Bearish"
-                    rsi_color := warning_text
+                    rsi_color := light_table_theme ? color.rgb(150, 0, 0) : color.rgb(200, 0, 0)  // Darker red for bearish
                 else
                     rsi_status := "Neutral"
                     rsi_color := light_table_theme ? color.rgb(255, 140, 0) : color.rgb(255, 165, 0)  // Orange color
             
-            string rsi_text = not na(current_rsi) ? rsi_status + " (" + str.tostring(current_rsi, "#.#") + ")" : "Loading..."
+            string rsi_text = not na(rsi_value) ? rsi_status + " (" + str.tostring(rsi_value, "#.#") + ")" : "Loading..."
             
             int rsi_row = show_volume ? (enable_volume_filter ? 6 : 5) : 4
             table.cell(rr_table, 0, rsi_row, "📊 RSI", text_color=header_text, bgcolor=header_bg)
@@ -763,6 +767,13 @@ if enable_trailing_stop and trailing_activated and not trailing_activated[1]
 
 
 
+
+
+// RSI Overbought/Oversold Visual Indicators
+// Overbought dot (red)
+plotshape(show_rsi and not na(rsi_value) and rsi_value >= 70, title="RSI Overbought", location=location.abovebar, color=color.red, style=shape.circle, size=size.tiny)
+// Oversold dot (green)
+plotshape(show_rsi and not na(rsi_value) and rsi_value <= 30, title="RSI Oversold", location=location.belowbar, color=color.green, style=shape.circle, size=size.tiny)
 
 
 // Debug Visual Indicators - Show only on current bar (toggleable)
