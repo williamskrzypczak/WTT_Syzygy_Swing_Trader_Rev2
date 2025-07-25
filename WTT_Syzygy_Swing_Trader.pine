@@ -1,5 +1,5 @@
 //@version=5
-indicator("WTT_Syzygy_Swing_Trader_Rev1.37", overlay=true)
+indicator("WTT_Syzygy_Swing_Trader_Rev1.40", overlay=true)
 
 
 // =============================================================================
@@ -117,13 +117,50 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1.37", overlay=true)
 // providing traders with additional momentum analysis alongside existing volume and 
 // position management data.
 
+// R1.38: VOLUME FILTER THRESHOLD DISPLAY ENHANCEMENT
+// ==================================================
+// Enhanced the volume and filter row in the HUD table to display the current volume filter 
+// threshold setting alongside the filter status. The volume filter text now shows the 
+// threshold value in square brackets (e.g., "High (1250K) | ✅ [0.0]") providing users 
+// with immediate visibility of their current filter settings. This improvement helps traders 
+// understand exactly what threshold is being applied for breakout filtering, making it 
+// easier to adjust settings and interpret why certain breakouts are being filtered or 
+// allowed through. The volume row remains enabled by default for optimal user experience.
+
+// R1.39: RSI FILTER INTEGRATION & ENHANCED ALERT SYSTEM
+// =====================================================
+// Implemented comprehensive RSI filtering system for breakout alerts to improve signal 
+// quality and reduce false breakouts during extreme market conditions. Added RSI filter 
+// conditions to both long and short breakout alerts, requiring RSI to be between 30-70 
+// for alerts to trigger. Enhanced alert messages to include current RSI values when RSI 
+// display is enabled. Updated the HUD table to show RSI filter status with visual 
+// indicators (✅/❌) and threshold range [30-70]. Implemented intelligent color coding 
+// where bullish RSI conditions (>50) display in green, bearish conditions (<50) in red, 
+// and extreme conditions (≥70 or ≤30) in red regardless of filter status. This dual-layer 
+// filtering system (volume + RSI) provides traders with high-quality breakout signals 
+// that avoid both low-volume and extreme momentum conditions, significantly improving 
+// the probability of successful trades.
+
+// R1.40: RSI COLOR ENHANCEMENT & TRADING INTUITION
+// ================================================
+// Enhanced RSI color coding system with intuitive trading signals using different shades 
+// of green and red for better visual distinction and trading decision-making. Implemented 
+// bright green for oversold conditions (RSI ≤30) suggesting strong buying opportunities, 
+// bright red for overbought conditions (RSI ≥70) suggesting strong selling opportunities, 
+// darker green for bullish momentum (RSI >50), and darker red for bearish momentum 
+// (RSI <50). This color hierarchy creates immediate visual feedback where color intensity 
+// matches signal strength: bright colors indicate extreme conditions requiring immediate 
+// action, while darker shades indicate moderate momentum conditions. The system adapts 
+// to both light and dark themes for optimal visibility and provides traders with instant 
+// visual cues for buying, selling, or waiting decisions based on RSI market conditions.
+
 // FUTURE REVISIONS (R2.0+)
 // ========================
 // All future updates will be numbered R2.0 and above, with consolidated change descriptions 
 // in paragraph format for better readability and maintenance.
 
 // =============================================================================
-// CURRENT VERSION: R1.37 | NEXT VERSION: R2.0
+// CURRENT VERSION: R1.40 | NEXT VERSION: R2.0
 // ============================================================================= 
 
 
@@ -697,7 +734,7 @@ if show_risk_reward and show_table
             if enable_volume_filter
                 bool volume_filter_active = not na(volume_z_score) and volume_z_score >= volume_filter_threshold
                 string filter_status = volume_filter_active ? "✅" : "❌"
-                volume_filter_text := volume_filter_text + " | " + filter_status
+                volume_filter_text := volume_filter_text + " | " + filter_status + " [" + str.tostring(volume_filter_threshold, "#.#") + "]"
                 volume_color := volume_filter_active ? success_text : warning_text
             
             table.cell(rr_table, 0, 5, "📈 Volume & Filter", text_color=header_text, bgcolor=header_bg)
@@ -727,8 +764,26 @@ if show_risk_reward and show_table
             
             string rsi_text = not na(rsi_value) ? rsi_status + " (" + str.tostring(rsi_value, "#.#") + ")" : "Loading..."
             
+            // Add RSI filter status
+            bool rsi_filter_active = not na(rsi_value) and rsi_value < 70 and rsi_value > 30
+            string rsi_filter_status = rsi_filter_active ? "✅" : "❌"
+            rsi_text := rsi_text + " | " + rsi_filter_status + " [30-70]"
+            
+            // Set color based on RSI status with trading intuition using different shades
+            if not na(rsi_value)
+                if rsi_value >= 70
+                    rsi_color := light_table_theme ? color.rgb(255, 0, 0) : color.rgb(255, 50, 50)  // Bright red for overbought (think about selling)
+                else if rsi_value <= 30
+                    rsi_color := light_table_theme ? color.rgb(0, 255, 0) : color.rgb(50, 255, 50)  // Bright green for oversold (think about buying)
+                else if rsi_value > 50
+                    rsi_color := light_table_theme ? color.rgb(0, 150, 0) : color.rgb(0, 200, 0)  // Darker green for bullish conditions
+                else if rsi_value < 50
+                    rsi_color := light_table_theme ? color.rgb(150, 0, 0) : color.rgb(200, 0, 0)  // Darker red for bearish conditions
+                else
+                    rsi_color := info_text  // Orange for neutral conditions
+            
             int rsi_row = show_volume ? (enable_volume_filter ? 6 : 5) : 4
-            table.cell(rr_table, 0, rsi_row, "📊 RSI", text_color=header_text, bgcolor=header_bg)
+            table.cell(rr_table, 0, rsi_row, "📊 RSI & Filter", text_color=header_text, bgcolor=header_bg)
             table.cell(rr_table, 1, rsi_row, rsi_text, text_color=rsi_color, bgcolor=info_bg)
 
 
@@ -743,8 +798,11 @@ if not na(most_recent_high) and close > most_recent_high and close[1] <= most_re
     // Enhanced volume filter validation - only pass if threshold is valid and z-score meets requirement
     bool alert_volume_filter_passed = not enable_volume_filter or (enable_volume_filter and not na(alert_volume_z_score) and not na(volume_filter_threshold) and alert_volume_z_score >= volume_filter_threshold)
     
-    if alert_volume_filter_passed
-        alert("BULLISH BREAKOUT on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (low): " + str.tostring(most_recent_low, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed above swing high" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : ""), alert.freq_once_per_bar)
+    // RSI filter for long positions - avoid overbought conditions
+    bool rsi_filter_passed = not show_rsi or (show_rsi and not na(rsi_value) and rsi_value < 70 and rsi_value > 30)
+    
+    if alert_volume_filter_passed and rsi_filter_passed
+        alert("BULLISH BREAKOUT on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (low): " + str.tostring(most_recent_low, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed above swing high" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : "") + (show_rsi ? " | RSI: " + str.tostring(rsi_value, "#.#") : ""), alert.freq_once_per_bar)
 
 
 // Alert when swing low line changes from gray to red (bearish breakdown)
@@ -757,8 +815,11 @@ if not na(most_recent_low) and close < most_recent_low and close[1] >= most_rece
     // Enhanced volume filter validation - only pass if threshold is valid and z-score meets requirement
     bool alert_volume_filter_passed = not enable_volume_filter or (enable_volume_filter and not na(alert_volume_z_score) and not na(volume_filter_threshold) and alert_volume_z_score >= volume_filter_threshold)
     
-    if alert_volume_filter_passed
-        alert("BEARISH BREAKDOWN on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (high): " + str.tostring(most_recent_high, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed below swing low" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : ""), alert.freq_once_per_bar)
+    // RSI filter for short positions - avoid oversold conditions
+    bool rsi_filter_passed = not show_rsi or (show_rsi and not na(rsi_value) and rsi_value < 70 and rsi_value > 30)
+    
+    if alert_volume_filter_passed and rsi_filter_passed
+        alert("BEARISH BREAKDOWN on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (high): " + str.tostring(most_recent_high, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed below swing low" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : "") + (show_rsi ? " | RSI: " + str.tostring(rsi_value, "#.#") : ""), alert.freq_once_per_bar)
 
 
 // Trailing Stop Alert
