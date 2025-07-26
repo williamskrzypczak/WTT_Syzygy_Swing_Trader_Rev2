@@ -154,13 +154,27 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1.40", overlay=true)
 // to both light and dark themes for optimal visibility and provides traders with instant 
 // visual cues for buying, selling, or waiting decisions based on RSI market conditions.
 
+// R1.41: TABLE SIGNAL SYNCHRONIZATION WITH FILTERED ALERTS
+// =======================================================
+// Synchronized the HUD table signal row to only display when alerts fire with all 
+// filtering conditions met. Added alert tracking variables (alert_fired_signal, 
+// alert_fired_entry_price, alert_fired_take_profit, alert_fired_stop_loss) to track 
+// filtered alert conditions. Modified table signal logic to use alert-fired values 
+// instead of general breakout signals, ensuring the table only shows "LONG" or "SHORT" 
+// when volume and RSI filters are passed. Updated Signal & R:R Ratio and Entry & Pip 
+// Distance rows to use alert-fired trade values for accurate risk-reward calculations. 
+// Added reset logic to clear alert-fired variables when new swing points are detected, 
+// ensuring proper table state management. This creates perfect synchronization between 
+// the HUD table and alert system, providing traders with filtered, high-quality signals 
+// that match their alert conditions exactly.
+
 // FUTURE REVISIONS (R2.0+)
 // ========================
 // All future updates will be numbered R2.0 and above, with consolidated change descriptions 
 // in paragraph format for better readability and maintenance.
 
 // =============================================================================
-// CURRENT VERSION: R1.40 | NEXT VERSION: R2.0
+// CURRENT VERSION: R1.41 | NEXT VERSION: R2.0
 // ============================================================================= 
 
 
@@ -282,9 +296,11 @@ var float trailing_stop_level = na
 var float partial_exit_level = na
 var float remaining_position_size = 100.0
 
-
-
-
+// Alert Tracking Variables for Table Synchronization
+var string alert_fired_signal = na
+var float alert_fired_entry_price = na
+var float alert_fired_take_profit = na
+var float alert_fired_stop_loss = na
 
 
 // Detect swing high
@@ -294,16 +310,11 @@ if not na(is_swing_high)
     swing_high_bar := bar_index - lookback
     most_recent_high := is_swing_high  // Update the most recent high
     
-    // Clear profit target and stop loss lines for new swing high
-    if show_risk_reward and show_stop_targets
-        line.delete(profit_target_line)
-        label.delete(pt_label)
-        line.delete(stop_loss_line)
-        label.delete(sl_label)
-        last_take_profit := na
-        last_trade_signal := na
-        last_stop_loss := na
-        persistent_entry_price := na
+    // Clear alert-fired variables for new swing high
+    alert_fired_signal := na
+    alert_fired_entry_price := na
+    alert_fired_take_profit := na
+    alert_fired_stop_loss := na
     
     array.push(swing_highs, swing_high)
     array.push(swing_high_bars, swing_high_bar)
@@ -321,16 +332,11 @@ if not na(is_swing_low)
     swing_low_bar := bar_index - lookback
     most_recent_low := is_swing_low  // Update the most recent low
     
-    // Clear profit target and stop loss lines for new swing low
-    if show_risk_reward and show_stop_targets
-        line.delete(profit_target_line)
-        label.delete(pt_label)
-        line.delete(stop_loss_line)
-        label.delete(sl_label)
-        last_take_profit := na
-        last_trade_signal := na
-        last_stop_loss := na
-        persistent_entry_price := na
+    // Clear alert-fired variables for new swing low
+    alert_fired_signal := na
+    alert_fired_entry_price := na
+    alert_fired_take_profit := na
+    alert_fired_stop_loss := na
     
     array.push(swing_lows, swing_low)
     array.push(swing_low_bars, swing_low_bar)
@@ -388,8 +394,6 @@ if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
         trade_profit_achieved := 0.0
         trade_risk_taken := 0.0
         persistent_partial_exit_level := na
-        
-
     
     // Long setup: Price breaks above swing high (breakout) - only on new breach
     if new_long_breach
@@ -533,7 +537,7 @@ if current_trade_active and not na(last_entry_price) and not na(persistent_parti
             label.set_xy(sl_label, setup_bar + 55, trailing_stop_level)
 
 
-// Breach Detection Logic - Track both price breaches and alert-fired breaches
+// Breach Detection Logic - Always run regardless of label display
 if not na(most_recent_high)
     high_breached := close > most_recent_high
 
@@ -544,6 +548,7 @@ if not na(most_recent_low)
 // Create horizontal lines with labels for swing points (only if show_labels is enabled)
 if not na(swing_high) and show_labels
     line.delete(high_line)
+    // Change color if price has closed above the line
     line_color = high_breached ? color.lime : color.teal
     high_line := line.new(swing_high_bar, swing_high, bar_index + 20, swing_high, color=line_color, width=2, style=line.style_solid)
     label.delete(high_label)
@@ -551,6 +556,7 @@ if not na(swing_high) and show_labels
 
 if not na(swing_low) and show_labels
     line.delete(low_line)
+    // Change color if price has closed below the line
     line_color = low_breached ? color.rgb(255, 20, 147) : color.gray
     low_line := line.new(swing_low_bar, swing_low, bar_index + 20, swing_low, color=line_color, width=2, style=line.style_solid)
     label.delete(low_label)
@@ -576,8 +582,8 @@ if show_trend_lines and array.size(swing_highs) >= 2 and array.size(swing_lows) 
     line.new(low1_bar, low1_price, low2_bar, low2_price, color=color.gray, width=2)
 
 
-// Plot Risk-Reward Analysis
-if show_risk_reward and show_stop_targets and not na(take_profit) and not na(stop_loss)
+// Plot Risk-Reward Analysis - Create lines whenever a new breach occurs
+if show_risk_reward and show_stop_targets and new_setup_triggered
     // Delete previous profit target line if it exists
     line.delete(profit_target_line)
     
@@ -610,18 +616,22 @@ if show_risk_reward and show_stop_targets and not na(take_profit) and not na(sto
     new_setup_triggered := false
 
 
-
-
-
-// Show persistent profit target line
-if show_risk_reward and show_stop_targets and not na(last_take_profit)
+// Show persistent profit target line if no new setup but we have a previous one
+if show_risk_reward and show_stop_targets and not new_setup_triggered and not na(last_take_profit)
     // Check if price has crossed the profit target or trailing stop
     bool profit_target_hit = (last_trade_signal == "LONG" and close >= last_take_profit) or (last_trade_signal == "SHORT" and close <= last_take_profit)
     bool trailing_stop_hit = trailing_activated and not na(trailing_stop_level) and ((last_trade_signal == "LONG" and close <= trailing_stop_level) or (last_trade_signal == "SHORT" and close >= trailing_stop_level))
     
     if profit_target_hit or trailing_stop_hit
-        // Price has hit the profit target or trailing stop, but keep lines visible for alert-fired trades
-        // Only track the profit/loss, don't clear the lines
+        // Price has hit the profit target or trailing stop, remove the line and label
+        line.delete(profit_target_line)
+        label.delete(pt_label)
+        line.delete(stop_loss_line)
+        label.delete(sl_label)
+        last_take_profit := na
+        last_trade_signal := na
+        last_stop_loss := na
+        persistent_entry_price := na
         
         // Calculate full profit achieved for remaining position
         if current_trade_active and not na(last_entry_price)
@@ -675,7 +685,7 @@ if show_risk_reward and show_table
     color strategy_text = light_table_theme ? color.rgb(150, 150, 0) : color.rgb(255, 255, 150)
     color strategy_bg = light_table_theme ? color.rgb(255, 255, 220) : color.rgb(50, 50, 0)
     
-    var table rr_table = table.new(position.top_right, 2, show_volume ? (enable_volume_filter ? (show_rsi ? 8 : 7) : (show_rsi ? 7 : 6)) : (show_rsi ? 6 : 5), bgcolor=table_bg, border_width=2, border_color=color.rgb(100, 100, 150))
+    var table rr_table = table.new(position.top_right, 2, show_volume ? (enable_volume_filter ? (show_rsi ? 7 : 6) : (show_rsi ? 6 : 5)) : (show_rsi ? 5 : 4), bgcolor=table_bg, border_width=2, border_color=color.rgb(100, 100, 150))
     
     if barstate.islast
         // Header with gradient effect and emojis
@@ -684,30 +694,30 @@ if show_risk_reward and show_table
         
         // Signal & R:R Ratio combined
         float current_rr = na
-        if not na(last_trade_signal) and not na(persistent_entry_price) and not na(last_take_profit)
-            if last_trade_signal == "LONG"
-                current_rr := (last_take_profit - persistent_entry_price) / (persistent_entry_price - last_stop_loss)
-            else if last_trade_signal == "SHORT"
-                current_rr := (persistent_entry_price - last_take_profit) / (last_stop_loss - persistent_entry_price)
+        if not na(alert_fired_signal) and not na(alert_fired_entry_price) and not na(alert_fired_take_profit)
+            if alert_fired_signal == "LONG"
+                current_rr := (alert_fired_take_profit - alert_fired_entry_price) / (alert_fired_entry_price - alert_fired_stop_loss)
+            else if alert_fired_signal == "SHORT"
+                current_rr := (alert_fired_entry_price - alert_fired_take_profit) / (alert_fired_stop_loss - alert_fired_entry_price)
         
-        string signal_rr_text = not na(last_trade_signal) ? last_trade_signal : "na"
+        string signal_rr_text = not na(alert_fired_signal) ? alert_fired_signal : "na"
         if not na(current_rr) and current_rr > 0
             signal_rr_text := signal_rr_text + " | 1:" + str.tostring(current_rr, "#.##")
         
         table.cell(rr_table, 0, 1, "📈 Signal & R:R", text_color=header_text, bgcolor=header_bg)
-        table.cell(rr_table, 1, 1, signal_rr_text, text_color=last_trade_signal == "LONG" ? success_text : warning_text, bgcolor=last_trade_signal == "LONG" ? success_bg : warning_bg)
+        table.cell(rr_table, 1, 1, signal_rr_text, text_color=alert_fired_signal == "LONG" ? success_text : warning_text, bgcolor=alert_fired_signal == "LONG" ? success_bg : warning_bg)
         
 
         
         // Entry & Pip Distance combined
         float pip_distance = na
-        if not na(last_trade_signal) and not na(persistent_entry_price) and not na(last_take_profit)
-            if last_trade_signal == "LONG"
-                pip_distance := (last_take_profit - persistent_entry_price) * 10000  // Convert to pips (4 decimal places)
-            else if last_trade_signal == "SHORT"
-                pip_distance := (persistent_entry_price - last_take_profit) * 10000  // Convert to pips (4 decimal places)
+        if not na(alert_fired_signal) and not na(alert_fired_entry_price) and not na(alert_fired_take_profit)
+            if alert_fired_signal == "LONG"
+                pip_distance := (alert_fired_take_profit - alert_fired_entry_price) * 10000  // Convert to pips (4 decimal places)
+            else if alert_fired_signal == "SHORT"
+                pip_distance := (alert_fired_entry_price - alert_fired_take_profit) * 10000  // Convert to pips (4 decimal places)
         
-        string entry_distance_text = not na(persistent_entry_price) ? str.tostring(persistent_entry_price, "#.#####") : "na"
+        string entry_distance_text = not na(alert_fired_entry_price) ? str.tostring(alert_fired_entry_price, "#.#####") : "na"
         if not na(pip_distance)
             entry_distance_text := entry_distance_text + " | " + str.tostring(pip_distance, "#") + "p"
         
@@ -804,11 +814,9 @@ if show_risk_reward and show_table
                 else
                     rsi_color := info_text  // Orange for neutral conditions
             
-                    int rsi_row = show_volume ? (enable_volume_filter ? 6 : 5) : 4
-        table.cell(rr_table, 0, rsi_row, "📊 RSI & Filter", text_color=header_text, bgcolor=header_bg)
-        table.cell(rr_table, 1, rsi_row, rsi_text, text_color=rsi_color, bgcolor=info_bg)
-
-
+            int rsi_row = show_volume ? (enable_volume_filter ? 6 : 5) : 4
+            table.cell(rr_table, 0, rsi_row, "📊 RSI & Filter", text_color=header_text, bgcolor=header_bg)
+            table.cell(rr_table, 1, rsi_row, rsi_text, text_color=rsi_color, bgcolor=info_bg)
 
 
 // Breakout Alert Conditions
@@ -826,6 +834,12 @@ if not na(most_recent_high) and close > most_recent_high and close[1] <= most_re
     bool rsi_filter_passed = not show_rsi or (show_rsi and not na(rsi_value) and rsi_value < 70 and rsi_value > 30)
     
     if alert_volume_filter_passed and rsi_filter_passed
+        // Set alert-fired variables for table synchronization
+        alert_fired_signal := "LONG"
+        alert_fired_entry_price := most_recent_high
+        alert_fired_take_profit := most_recent_high + (most_recent_high - most_recent_low)
+        alert_fired_stop_loss := most_recent_low
+        
         alert("BULLISH BREAKOUT on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (low): " + str.tostring(most_recent_low, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed above swing high" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : "") + (show_rsi ? " | RSI: " + str.tostring(rsi_value, "#.#") : ""), alert.freq_once_per_bar)
 
 
@@ -843,6 +857,12 @@ if not na(most_recent_low) and close < most_recent_low and close[1] >= most_rece
     bool rsi_filter_passed = not show_rsi or (show_rsi and not na(rsi_value) and rsi_value < 70 and rsi_value > 30)
     
     if alert_volume_filter_passed and rsi_filter_passed
+        // Set alert-fired variables for table synchronization
+        alert_fired_signal := "SHORT"
+        alert_fired_entry_price := most_recent_low
+        alert_fired_take_profit := most_recent_low - (most_recent_high - most_recent_low)
+        alert_fired_stop_loss := most_recent_high
+        
         alert("BEARISH BREAKDOWN on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (high): " + str.tostring(most_recent_high, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed below swing low" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : "") + (show_rsi ? " | RSI: " + str.tostring(rsi_value, "#.#") : ""), alert.freq_once_per_bar)
 
 
