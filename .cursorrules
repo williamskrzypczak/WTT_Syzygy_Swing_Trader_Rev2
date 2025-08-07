@@ -1,0 +1,243 @@
+# Pine Script Development Rules
+
+## Code Structure & Organization
+
+### Version Declaration
+- Always start with `//@version=5` as the first line
+- Use `indicator()` or `strategy()` with descriptive names
+- Include `overlay=true` for price-based indicators
+
+### Commenting & Documentation
+- Use comprehensive revision history at the top
+- Document all major changes with version numbers (R1.0, R1.1, etc.)
+- Add inline comments for complex logic
+- Use section dividers with `// =============================================================================`
+
+### Variable Naming
+- Use descriptive names: `swing_high`, `profit_target`, `trailing_stop_level`
+- Use snake_case for variables and functions
+- Prefix boolean variables with `is_`, `has_`, `enable_`, `show_`
+- Use `var` for persistent variables that need to maintain state
+
+## Pine Script Best Practices
+
+### Input Parameters
+- Group related inputs together
+- Provide meaningful default values
+- Use `minval`, `maxval`, `step` for numeric inputs
+- Add tooltips for complex parameters
+- Use descriptive input names
+
+### Variable Declarations
+- Declare all variables at the top of the script
+- Use `var` for variables that need to persist across bars
+- Initialize arrays with `array.new<type>()`
+- Use proper data types: `float`, `int`, `bool`, `string`
+
+### Logic Flow
+- Use clear conditional statements
+- Avoid deeply nested if-else chains
+- Use early returns to reduce complexity
+- Validate data before calculations
+
+### Performance Optimization
+- Minimize calculations in loops
+- Use `barstate.islast` for table updates
+- Cache frequently used calculations
+- Avoid redundant variable assignments
+
+## Trading Logic Standards
+
+### Entry/Exit Conditions
+- Always validate data before using in calculations
+- Use proper breakout detection: `close > level and close[1] <= level`
+- Implement proper risk management
+- Add filtering conditions (volume, RSI, etc.)
+
+### Risk Management
+- Always include stop loss and profit target calculations
+- Use ATR-based or percentage-based risk management
+- Implement trailing stops when appropriate
+- Track success rates and performance metrics
+
+### Visual Elements
+- Use consistent color schemes
+- Provide clear labels with price levels
+- Use appropriate line styles (solid, dashed, dotted)
+- Ensure good contrast for readability
+
+## Code Quality Standards
+
+### Error Handling
+- Check for `na` values before calculations
+- Validate array sizes before accessing elements
+- Use proper conditional checks for all operations
+- Handle edge cases gracefully
+
+### Code Readability
+- Use consistent indentation (4 spaces)
+- Group related code blocks together
+- Use meaningful variable names
+- Keep functions focused and single-purpose
+
+### Documentation
+- Document complex algorithms
+- Explain trading logic and reasoning
+- Include parameter descriptions
+- Add usage examples in comments
+
+## Specific Pine Script Patterns
+
+### Swing Detection
+```pine
+// Proper swing high/low detection
+is_swing_high = ta.pivothigh(high, lookback, lookback)
+if not na(is_swing_high)
+    swing_high := is_swing_high
+    swing_high_bar := bar_index - lookback
+```
+
+### Breakout Detection
+```pine
+// Proper breakout detection with previous bar check
+bool new_breach = close > level and close[1] <= level
+```
+
+### ATR-Based Calculations
+```pine
+// ATR-based stop loss and profit target
+atr_value = ta.atr(atr_length)
+stop_loss := entry_price - (atr_value * atr_multiplier)
+profit_target := entry_price + (atr_value * atr_multiplier)
+```
+
+### Table Creation
+```pine
+// Proper table creation with theme support
+var table my_table = table.new(position.top_right, columns, rows, 
+    bgcolor=theme_bg, border_width=2, border_color=border_color)
+```
+
+## Testing & Validation
+
+### Data Validation
+- Always check for `na` values before calculations
+- Validate array sizes and indices
+- Ensure proper data types
+- Test edge cases
+
+### Performance Testing
+- Monitor calculation complexity
+- Avoid excessive repainting
+- Use efficient data structures
+- Cache frequently used values
+
+## File Organization
+
+### Header Section
+- Version declaration
+- Indicator/strategy declaration
+- Revision history
+- Feature descriptions
+
+### Input Section
+- Group related inputs
+- Provide defaults and constraints
+- Add helpful tooltips
+
+### Variable Section
+- Declare all variables
+- Use proper initialization
+- Group by functionality
+
+### Logic Section
+- Main calculation logic
+- Entry/exit conditions
+- Risk management
+- Performance tracking
+
+### Visual Section
+- Plot statements
+- Line and label creation
+- Table updates
+- Color management
+
+### Alert Section
+- Alert conditions
+- Comprehensive alert messages
+- Include relevant data
+
+## Common Pitfalls to Avoid
+
+### Performance Issues
+- Don't calculate the same value multiple times
+- Avoid unnecessary repainting
+- Use efficient data structures
+- Cache expensive calculations
+
+### Logic Errors
+- Don't forget to check for `na` values
+- Validate array access
+- Use proper breakout detection
+- Handle edge cases
+
+### Visual Issues
+- Ensure good color contrast
+- Use appropriate line styles
+- Provide clear labels
+- Test on different chart themes
+
+## Code Review Checklist
+
+### Before Submitting
+- [ ] All variables properly declared
+- [ ] No `na` value errors
+- [ ] Proper breakout detection logic
+- [ ] Risk management implemented
+- [ ] Visual elements clear and readable
+- [ ] Performance optimized
+- [ ] Documentation complete
+- [ ] Error handling in place
+
+### Quality Checks
+- [ ] Code follows Pine Script v5 standards
+- [ ] Variables use descriptive names
+- [ ] Logic is clear and well-commented
+- [ ] No redundant calculations
+- [ ] Proper use of `var` for persistent variables
+- [ ] Efficient array operations
+- [ ] Comprehensive error handling
+
+## Version Control
+
+### Commit Messages
+- Use descriptive commit messages
+- Include version numbers for major changes
+- Document new features and bug fixes
+- Reference issue numbers when applicable
+
+### Change Documentation
+- Update revision history for all changes
+- Document breaking changes
+- Include migration notes for major updates
+- Maintain backward compatibility when possible
+
+## Complete Update Workflow
+
+### When "Update Everything" is Requested
+1. **Save to Local Computer**: Update the Pine Script file with all changes
+2. **Update Revision History**: Add new version in descending order at the top
+   - Use format: `R1.X: DESCRIPTION`
+   - Include comprehensive change description
+   - Update current version number
+3. **Save to Remote GitHub Repository**: 
+   - Commit changes with descriptive message
+   - Push to remote repository
+   - Include version number in commit message
+4. **Append to Development Rules**: Add any new patterns or workflows to `.cursorrules`
+
+### Version Control Standards
+- Always update revision history before committing
+- Use descriptive commit messages with version numbers
+- Test all changes before pushing to remote
+- Maintain backup of working versions

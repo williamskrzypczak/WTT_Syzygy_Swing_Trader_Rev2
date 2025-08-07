@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WTT Syzygy Swing Trader - Quick Reference Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 20px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+        }
+        
+        h2 {
+            color: #e74c3c;
+            font-size: 1.8em;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-left: 4px solid #e74c3c;
+            padding-left: 15px;
+        }
+        
+        h3 {
+            color: #27ae60;
+            font-size: 1.4em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-card {
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #ecf0f1;
+            transition: transform 0.2s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: #3498db;
+        }
+        
+        .alert-section {
+            background: linear-gradient(135deg, #fff5f5 0%, #fff 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #f39c12;
+        }
+        
+        .alert-item {
+            margin: 15px 0;
+            padding: 15px;
+            border-left: 4px solid #f39c12;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .alert-title {
+            font-weight: bold;
+            color: #e67e22;
+            font-size: 1.1em;
+        }
+        
+        .alert-description {
+            color: #555;
+            margin-top: 8px;
+        }
+        
+        .color-coded {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        
+        .green { color: #27ae60; }
+        .red { color: #e74c3c; }
+        .orange { color: #f39c12; }
+        .blue { color: #3498db; }
+        .purple { color: #9b59b6; }
+        .yellow { color: #f1c40f; }
+        
+        .table-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #27ae60;
+        }
+        
+        .table-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .table-row:last-child {
+            border-bottom: none;
+        }
+        
+        .table-label {
+            font-weight: bold;
+            color: #2c3e50;
+            width: 40%;
+        }
+        
+        .table-value {
+            color: #555;
+            width: 60%;
+        }
+        
+        .tip-box {
+            background: linear-gradient(135deg, #e8f5e8 0%, #fff 100%);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+            margin: 20px 0;
+        }
+        
+        .warning-box {
+            background: linear-gradient(135deg, #fff3e0 0%, #fff 100%);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #f39c12;
+            margin: 20px 0;
+        }
+        
+        .version-info {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+            border-radius: 8px;
+            border: 2px solid #3498db;
+        }
+        
+        .version-number {
+            font-size: 1.5em;
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        ul {
+            padding-left: 20px;
+        }
+        
+        li {
+            margin: 8px 0;
+        }
+        
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 WTT Syzygy Swing Trader</h1>
+        <div class="subtitle">Professional Swing Trading Indicator - Quick Reference Guide</div>
+        
+        <div class="section">
+            <h2>📊 Core Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🎯 Swing Detection</h3>
+                    <ul>
+                        <li><span class="color-coded green">7-bar lookback</span> pivot detection</li>
+                        <li>Dynamic color-changing breakout lines</li>
+                        <li>Persistent profit target & stop loss lines</li>
+                        <li>Real-time trend analysis</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>📈 Risk-Reward Analysis</h3>
+                    <ul>
+                        <li>Live R:R ratio calculations</li>
+                        <li>Success rate tracking</li>
+                        <li>Partial profit-taking logic</li>
+                        <li>Trailing stop management</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>🔍 Technical Filters</h3>
+                    <ul>
+                        <li>Volume filtering (z-score based)</li>
+                        <li>RSI momentum analysis</li>
+                        <li>Multi-timeframe alerts</li>
+                        <li>Advanced breakout confirmation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🚨 Alert System</h2>
+            <div class="alert-section">
+                <div class="alert-item">
+                    <div class="alert-title">🟢 BULLISH BREAKOUT</div>
+                    <div class="alert-description">
+                        Triggers when price closes above swing high with volume confirmation. 
+                        Includes entry price, stop loss, profit target, and timeframe information.
+                    </div>
+                </div>
+                
+                <div class="alert-item">
+                    <div class="alert-title">🔴 BEARISH BREAKDOWN</div>
+                    <div class="alert-description">
+                        Triggers when price closes below swing low with volume confirmation. 
+                        Includes entry price, stop loss, profit target, and timeframe information.
+                    </div>
+                </div>
+                
+                <div class="alert-item">
+                    <div class="alert-title">🟡 TRAILING STOP ACTIVATED</div>
+                    <div class="alert-description">
+                        Notifies when trailing stop becomes active, suggesting partial position closure 
+                        for risk management.
+                    </div>
+                </div>
+                
+                <div class="alert-item">
+                    <div class="alert-title">🟡 RSI OVERBOUGHT SERIES ENDED</div>
+                    <div class="alert-description">
+                        Yellow dot alert indicating potential reversal from overbought conditions. 
+                        Consider short opportunities or closing long positions.
+                    </div>
+                </div>
+                
+                <div class="alert-item">
+                    <div class="alert-title">🟠 RSI OVERSOLD SERIES ENDED</div>
+                    <div class="alert-description">
+                        Orange dot alert indicating potential reversal from oversold conditions. 
+                        Consider long opportunities or closing short positions.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📋 HUD Table Information</h2>
+            <div class="table-section">
+                <div class="table-row">
+                    <div class="table-label">📈 Signal & R:R Ratio</div>
+                    <div class="table-value">Current trade signal (LONG/SHORT) with risk-reward ratio</div>
+                </div>
+                
+                <div class="table-row">
+                    <div class="table-label">🎯 Entry & Distance</div>
+                    <div class="table-value">Entry price and pip distance to profit target</div>
+                </div>
+                
+                <div class="table-row">
+                    <div class="table-label">📊 Success Rate/Edge</div>
+                    <div class="table-value">Overall success rate with win/loss statistics</div>
+                </div>
+                
+                <div class="table-row">
+                    <div class="table-label">📈 Position & PM</div>
+                    <div class="table-value">Remaining position size and profit management status</div>
+                </div>
+                
+                <div class="table-row">
+                    <div class="table-label">📈 Volume & Filter</div>
+                    <div class="table-value">Volume status (High/Normal/Weak) with filter threshold</div>
+                </div>
+                
+                <div class="table-row">
+                    <div class="table-label">📊 RSI & Filter</div>
+                    <div class="table-value">RSI value and status with momentum filter</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🎨 Visual Indicators</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>📏 Swing Lines</h3>
+                    <ul>
+                        <li><span class="color-coded blue">Teal</span> - Unbreached swing high</li>
+                        <li><span class="color-coded green">Lime Green</span> - Bullish breakout</li>
+                        <li><span class="color-coded gray">Gray</span> - Unbreached swing low</li>
+                        <li><span class="color-coded red">Deep Pink</span> - Bearish breakdown</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>🔴 RSI Dots</h3>
+                    <ul>
+                        <li><span class="color-coded red">Red dots</span> - Overbought series (tiny)</li>
+                        <li><span class="color-coded yellow">Yellow dots</span> - Last overbought (small)</li>
+                        <li><span class="color-coded green">Green dots</span> - Oversold series (tiny)</li>
+                        <li><span class="color-coded orange">Orange dots</span> - Last oversold (small)</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>📊 Profit Management</h3>
+                    <ul>
+                        <li><span class="color-coded green">Lime dashed lines</span> - Profit targets</li>
+                        <li><span class="color-coded red">Pink dashed lines</span> - Stop losses</li>
+                        <li><span class="color-coded orange">Orange lines</span> - Trailing stops</li>
+                        <li><span class="color-coded blue">Labels</span> - PT/SL/TS indicators</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>⚙️ Key Settings</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🔧 Core Parameters</h3>
+                    <ul>
+                        <li><code>Lookback Period</code>: 7 bars (default)</li>
+                        <li><code>Show Labels</code>: On/Off</li>
+                        <li><code>Show Trend Lines</code>: On/Off</li>
+                        <li><code>Show Risk-Reward Analysis</code>: On/Off</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>📊 Technical Filters</h3>
+                    <ul>
+                        <li><code>Show Volume in Table</code>: On/Off</li>
+                        <li><code>Enable Volume Filter</code>: On/Off</li>
+                        <li><code>Volume Filter Threshold</code>: -2.0 to 2.0</li>
+                        <li><code>Show RSI in Table</code>: On/Off</li>
+                        <li><code>RSI Length</code>: 14 periods (default)</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>💰 Profit Management</h3>
+                    <ul>
+                        <li><code>Enable Partial Taking</code>: On/Off</li>
+                        <li><code>Partial Exit Ratio</code>: 0.5 to 3.0</li>
+                        <li><code>Partial Exit Size</code>: 25% to 75%</li>
+                        <li><code>Enable Trailing Stop</code>: On/Off</li>
+                        <li><code>Trailing Distance</code>: 0.1 to 2.0</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tip-box">
+            <h3>💡 Pro Tips</h3>
+            <ul>
+                <li><strong>Volume Filter</strong>: Use 0.0 threshold for above-average volume confirmation</li>
+                <li><strong>RSI Filter</strong>: Avoid trading during extreme RSI conditions (≥70 or ≤30)</li>
+                <li><strong>Multi-Timeframe</strong>: Run on multiple timeframes for comprehensive analysis</li>
+                <li><strong>Partial Profits</strong>: Take 50% off at 1:1 R:R ratio for risk management</li>
+                <li><strong>Trailing Stops</strong>: Activate at 0.5 R:R for dynamic position management</li>
+            </ul>
+        </div>
+        
+        <div class="warning-box">
+            <h3>⚠️ Important Notes</h3>
+            <ul>
+                <li>Alerts include timeframe information for multi-timeframe analysis</li>
+                <li>Volume filtering requires sufficient historical data for accurate z-scores</li>
+                <li>RSI dots provide visual confirmation of momentum extremes</li>
+                <li>Success rate tracking helps validate strategy performance</li>
+                <li>Always use proper risk management with stop losses</li>
+            </ul>
+        </div>
+        
+        <div class="version-info">
+            <div class="version-number">Current Version: R1.47</div>
+            <p>Next Major Update: R2.0</p>
+            <p><em>Professional swing trading indicator with advanced filtering and risk management</em></p>
+        </div>
+    </div>
+</body>
+</html> 

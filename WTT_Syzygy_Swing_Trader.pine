@@ -1,180 +1,152 @@
 //@version=5
-indicator("WTT_Syzygy_Swing_Trader_Rev1.41", overlay=true)
+indicator("WTT_Syzygy_Swing_Trader_Rev1.49", overlay=true)
 
 
 // =============================================================================
 // WTT SYZYGY SWING TRADER - REVISION HISTORY
 // =============================================================================
 
-// R1.0 - R1.27: FOUNDATION & CORE FEATURES
-// =========================================
-// The indicator evolved from basic swing detection to a comprehensive swing trading system. 
-// Key milestones included implementing 7-bar lookback pivot detection, dynamic color-changing 
-// breakout lines (lime green for bullish, deep pink for bearish), and persistent profit 
-// target/stop loss lines. The risk-reward table was added with live calculations, success 
-// rate tracking, and partial profit-taking logic. Visual enhancements included vibrant color 
-// schemes, theme toggles, and debug indicators. Alert systems were refined using 
-// `alertcondition` for reliable breakout notifications.
+// R1.50: SWING LINE CROSS-BACK INVALIDATION & ENHANCED COLOR SCHEME
+// ================================================================
+// Implemented fourth condition for profit target and stop loss line removal when 
+// price crosses back over the original swing line, invalidating the breakout setup. 
+// Enhanced color scheme with strong green (RGB: 0,200,0) for profit targets and 
+// strong red (RGB: 220,0,0) for stop losses with white text for better contrast. 
+// Fixed logic to only trigger on actual crossing events rather than position, 
+// ensuring lines persist until proper invalidation occurs.
 
-// R1.28: ENHANCED TABLE & INTERFACE OPTIMIZATION
+// R1.49: ATR DISPLAY ENHANCEMENT IN HUD TABLE
+// ===========================================
+// Added real-time ATR value display to the Entry & Distance row in the HUD table 
+// for enhanced market context. The ATR value is shown in pips alongside the entry 
+// price and distance information, providing immediate visibility into current market 
+// volatility. This helps traders understand how the ATR-based profit targets and 
+// stop losses are adapting to current market conditions.
+
+// R1.48: ATR-BASED PROFIT TARGETS & STOP LOSSES WITH PRICE LABELS
+// ===============================================================
+// Implemented comprehensive ATR-based profit target and stop loss calculations 
+// replacing the previous 1:1 risk-reward system. Added price text to all swing 
+// point labels, profit target labels, stop loss labels, and trailing stop labels 
+// for enhanced visibility. Profit targets now use 2 ATR while stop losses use 
+// 1 ATR, creating a dynamic volatility-adaptive system that automatically adjusts 
+// to market conditions. All labels now display precise price levels with improved 
+// text sizing and contrast for better readability.
+
+// R1.47: HUD SIGNAL PERSISTENCE DATA SOURCE FIX
 // ==============================================
-// Added RSI and Volume tracking to the risk-reward table with color-coded status indicators. 
-// RSI shows Overbought (red), Oversold (green), Bullish (green), Bearish (red), and Neutral 
-// (orange) states. Volume displays Weak (red), Normal (orange), and High (green) status. 
-// Implemented table toggle functionality and removed unused "Risk Per Trade Percentage" and 
-// "Account Size" inputs for a cleaner interface. Streamlined code by eliminating unused 
-// position sizing calculations and variables.
+// Fixed issue where persistent display variables were only updated in alert 
+// conditions, not in main breakout detection logic.
 
-// R1.29: RSI REMOVAL & VOLUME ENHANCEMENT
-// =======================================
-// Completely removed all RSI functionality from the indicator to simplify the codebase and 
-// focus on core swing trading features. Replaced RSI input with a dedicated "Show Volume in 
-// Table" toggle. Enhanced volume display to show both status (High/Normal/Weak) and actual 
-// volume numbers (e.g., "High (1250K)") for better quantitative analysis. Reduced table size 
-// from 10 to 9 rows when volume is enabled, streamlining the interface while maintaining all 
-// essential trading information.
+// R1.46: HUD SIGNAL PERSISTENCE LOGIC CORRECTION
+// ===============================================
+// Corrected logic to only clear persistent display when new signals fire, not 
+// when new swing points are detected.
 
-// R1.30: ALERT ENHANCEMENTS & CODE ORGANIZATION
-// =============================================
-// Enhanced alert system with comprehensive trade information including symbol, current price, 
-// opposite swing price (suggested stop loss), and profit target. Removed test alerts and 
-// alertcondition() calls to streamline the alert system. Reorganized code structure with 
-// consistent 2-line spacing between major sections for improved readability and maintenance. 
-// Moved debug visual indicators to the bottom of the script for better logical organization.
+// R1.45: HUD SIGNAL PERSISTENCE ENHANCEMENT
+// ==========================================
+// Implemented persistent signal and risk-reward ratio display in HUD table to 
+// maintain visibility until new signal fires.
 
-// R1.31: TRAILING STOP ALERT ENHANCEMENT & VOLUME CALCULATION IMPROVEMENT
-// ======================================================================
-// Enhanced trailing stop alert to include strategic position management suggestion: "According 
-// to the indicator's strategy, this is a suggested point to close 50% (half) of your position." 
-// Improved volume calculation method from simple ratio comparison to statistical standard 
-// deviation analysis using z-scores. New volume classification uses 20-period SMA and standard 
-// deviation to determine High (>1.0 z-score), Weak (<-1.0 z-score), and Normal (-1.0 to 1.0 
-// z-score) volume status, providing more statistically sound and adaptive volume analysis.
+// R1.44: RSI DOT SIZE ENHANCEMENT
+// ===============================
+// Enhanced visibility of RSI extreme condition dots by increasing size from tiny 
+// to small.
 
-// R1.32: VOLUME ALERT SYSTEM IMPLEMENTATION
-// =========================================
-// Added comprehensive volume alert system with dual functionality for both high and low volume 
-// detection. High volume alerts trigger when volume exceeds 1.0 z-score above 20-period average, 
-// indicating increased market activity and potential trend continuation or reversal. Low volume 
-// alerts trigger when volume falls below -1.0 z-score, indicating decreased market activity and 
-// potential consolidation or indecision. Both alerts include detailed information: symbol, current 
-// price, actual volume in thousands, z-score value, and market context. Alerts are conditionally 
-// activated only when "Show Volume in Table" option is enabled, maintaining consistency with 
-// existing volume analysis features. Implementation reuses existing volume calculations for 
-// optimal performance without additional computational overhead.
+// R1.43: CODE CLEANUP AND OPTIMIZATION
+// ====================================
+// Streamlined codebase by removing unused and redundant code elements to improve 
+// performance.
 
-// R1.33: VOLUME FILTER FOR BREAKOUTS
-// ==================================
-// Implemented optional volume filtering system for swing breakouts to improve signal quality and 
-// reduce false breakouts. Added "Enable Volume Filter for Breakouts" toggle and configurable 
-// "Volume Filter Threshold" input (z-score based, range -2.0 to 2.0). When enabled, breakouts 
-// only trigger when volume z-score meets or exceeds the specified threshold. Default threshold 
-// of 0.0 requires above-average volume for breakout confirmation. Volume filter applies to both 
-// long and short breakouts, as well as breakout alerts. Added visual feedback in the risk-reward 
-// table showing filter status (PASS/BLOCK) and current threshold when volume filtering is active. 
-// Table dynamically expands to accommodate the new volume filter status row. This feature allows 
-// traders to focus on high-conviction breakouts with institutional support while maintaining the 
-// flexibility to disable filtering when desired.
-
-// R1.34: STREAMLINED VOLUME ALERTS
-// =================================
-// Removed standalone high and low volume alerts to eliminate redundancy with the integrated 
-// volume filtering system. Since volume filtering is now built into the breakout signals and 
-// alerts, separate volume alerts were creating unnecessary noise and duplicate notifications. 
-// The volume filter system provides more targeted and actionable alerts by only notifying when 
-// volume conditions meet the specified threshold for actual breakout opportunities. This 
-// streamlining improves the user experience by reducing alert fatigue and focusing on 
-// high-probability trading setups.
-
-// R1.35: VOLUME FILTER VALIDATION FIX
-// ===================================
-// Fixed critical bug in volume filtering logic where alerts were not properly respecting the 
-// volume filter threshold setting. Enhanced validation in both main breakout detection and 
-// alert conditions to ensure proper threshold checking. Added explicit validation for 
-// volume_filter_threshold to prevent alerts from triggering when threshold is invalid or 
-// volume z-score doesn't meet the specified requirement. The fix ensures that when volume 
-// filtering is enabled, alerts will only trigger when the volume z-score meets or exceeds 
-// the user-defined threshold, providing more accurate and filtered breakout signals.
-
-// R1.36: TABLE CONSOLIDATION & OPTIMIZATION
-// =========================================
-// Streamlined the risk-reward table by consolidating related information into fewer, more 
-// efficient rows. Combined Signal & R:R Ratio, Entry & Pip Distance, Position & PM Status, 
-// and Volume & Filter into single rows with pipe-separated values. Reduced table size from 
-// 9-10 rows to 5-6 rows while maintaining all essential trading information. Improved 
-// readability and reduced visual clutter while preserving functionality. Table now displays 
-// more information in less space, making it easier to scan and interpret at a glance.
-
-// R1.37: RSI INTEGRATION & ENHANCED TECHNICAL ANALYSIS
-// ===================================================
-// Added comprehensive RSI (Relative Strength Index) integration to the HUD table with 
-// configurable length parameter (default 14 periods). RSI display includes both numerical 
-// value and status classification: Overbought (≥70), Oversold (≤30), Bullish (>50), 
-// Bearish (<50), and Neutral (=50). Color-coded status indicators provide instant visual 
-// feedback: red for overbought/bearish, green for oversold/bullish, orange for neutral. 
-// Added "Show RSI in Table" toggle for optional display and "RSI Length" input for 
-// customization. Table dynamically adjusts size to accommodate RSI row when enabled, 
-// providing traders with additional momentum analysis alongside existing volume and 
-// position management data.
-
-// R1.38: VOLUME FILTER THRESHOLD DISPLAY ENHANCEMENT
-// ==================================================
-// Enhanced the volume and filter row in the HUD table to display the current volume filter 
-// threshold setting alongside the filter status. The volume filter text now shows the 
-// threshold value in square brackets (e.g., "High (1250K) | ✅ [0.0]") providing users 
-// with immediate visibility of their current filter settings. This improvement helps traders 
-// understand exactly what threshold is being applied for breakout filtering, making it 
-// easier to adjust settings and interpret why certain breakouts are being filtered or 
-// allowed through. The volume row remains enabled by default for optimal user experience.
-
-// R1.39: RSI FILTER INTEGRATION & ENHANCED ALERT SYSTEM
-// =====================================================
-// Implemented comprehensive RSI filtering system for breakout alerts to improve signal 
-// quality and reduce false breakouts during extreme market conditions. Added RSI filter 
-// conditions to both long and short breakout alerts, requiring RSI to be between 30-70 
-// for alerts to trigger. Enhanced alert messages to include current RSI values when RSI 
-// display is enabled. Updated the HUD table to show RSI filter status with visual 
-// indicators (✅/❌) and threshold range [30-70]. Implemented intelligent color coding 
-// where bullish RSI conditions (>50) display in green, bearish conditions (<50) in red, 
-// and extreme conditions (≥70 or ≤30) in red regardless of filter status. This dual-layer 
-// filtering system (volume + RSI) provides traders with high-quality breakout signals 
-// that avoid both low-volume and extreme momentum conditions, significantly improving 
-// the probability of successful trades.
-
-// R1.40: RSI COLOR ENHANCEMENT & TRADING INTUITION
-// ================================================
-// Enhanced RSI color coding system with intuitive trading signals using different shades 
-// of green and red for better visual distinction and trading decision-making. Implemented 
-// bright green for oversold conditions (RSI ≤30) suggesting strong buying opportunities, 
-// bright red for overbought conditions (RSI ≥70) suggesting strong selling opportunities, 
-// darker green for bullish momentum (RSI >50), and darker red for bearish momentum 
-// (RSI <50). This color hierarchy creates immediate visual feedback where color intensity 
-// matches signal strength: bright colors indicate extreme conditions requiring immediate 
-// action, while darker shades indicate moderate momentum conditions. The system adapts 
-// to both light and dark themes for optimal visibility and provides traders with instant 
-// visual cues for buying, selling, or waiting decisions based on RSI market conditions.
+// R1.42: HUD TABLE SPACING ENHANCEMENT
+// ====================================
+// Added visual spacing above HUD table to improve chart readability and reduce 
+// visual clutter.
 
 // R1.41: TABLE SIGNAL SYNCHRONIZATION WITH FILTERED ALERTS
 // =======================================================
-// Synchronized the HUD table signal row to only display when alerts fire with all 
-// filtering conditions met. Added alert tracking variables (alert_fired_signal, 
-// alert_fired_entry_price, alert_fired_take_profit, alert_fired_stop_loss) to track 
-// filtered alert conditions. Modified table signal logic to use alert-fired values 
-// instead of general breakout signals, ensuring the table only shows "LONG" or "SHORT" 
-// when volume and RSI filters are passed. Updated Signal & R:R Ratio and Entry & Pip 
-// Distance rows to use alert-fired trade values for accurate risk-reward calculations. 
-// Added reset logic to clear alert-fired variables when new swing points are detected, 
-// ensuring proper table state management. This creates perfect synchronization between 
-// the HUD table and alert system, providing traders with filtered, high-quality signals 
-// that match their alert conditions exactly.
+// Synchronized HUD table to only display when alerts fire with all filtering 
+// conditions met.
+
+// R1.40: RSI COLOR ENHANCEMENT & TRADING INTUITION
+// ================================================
+// Enhanced RSI color coding system with intuitive trading signals using different 
+// shades of green and red for better visual distinction and trading decision-making.
+
+// R1.39: RSI FILTER INTEGRATION & ENHANCED ALERT SYSTEM
+// =====================================================
+// Implemented comprehensive RSI filtering system for breakout alerts to improve 
+// signal quality and reduce false breakouts during extreme market conditions.
+
+// R1.38: VOLUME FILTER THRESHOLD DISPLAY ENHANCEMENT
+// ==================================================
+// Enhanced volume and filter row to display current threshold setting alongside 
+// filter status for better user visibility.
+
+// R1.37: RSI INTEGRATION & ENHANCED TECHNICAL ANALYSIS
+// ===================================================
+// Added comprehensive RSI integration to HUD table with configurable parameters 
+// and color-coded status indicators.
+
+// R1.36: TABLE CONSOLIDATION & OPTIMIZATION
+// =========================================
+// Streamlined risk-reward table by consolidating related information into fewer rows. 
+// Reduced table size while maintaining all essential information.
+
+// R1.35: VOLUME FILTER VALIDATION FIX
+// ===================================
+// Fixed critical bug in volume filtering logic where alerts weren't properly 
+// respecting threshold settings.
+
+// R1.34: STREAMLINED VOLUME ALERTS
+// =================================
+// Removed standalone volume alerts to eliminate redundancy with integrated volume 
+// filtering system.
+
+// R1.33: VOLUME FILTER FOR BREAKOUTS
+// ==================================
+// Implemented optional volume filtering system for swing breakouts with configurable 
+// threshold. Added visual feedback in risk-reward table.
+
+// R1.32: VOLUME ALERT SYSTEM IMPLEMENTATION
+// =========================================
+// Added comprehensive volume alert system for high and low volume detection with 
+// detailed market context information.
+
+// R1.31: TRAILING STOP ALERT ENHANCEMENT & VOLUME CALCULATION IMPROVEMENT
+// ======================================================================
+// Enhanced trailing stop alert with position management suggestions. Improved volume 
+// calculation using statistical standard deviation analysis with z-scores.
+
+// R1.30: ALERT ENHANCEMENTS & CODE ORGANIZATION
+// =============================================
+// Enhanced alert system with comprehensive trade information. Reorganized code structure 
+// with consistent spacing for improved readability.
+
+// R1.29: RSI REMOVAL & VOLUME ENHANCEMENT
+// =======================================
+// Removed RSI functionality to simplify codebase. Enhanced volume display to show status 
+// and actual numbers. Reduced table size while maintaining essential information.
+
+// R1.28: ENHANCED TABLE & INTERFACE OPTIMIZATION
+// ==============================================
+// Added RSI and Volume tracking to risk-reward table with color-coded status indicators. 
+// Implemented table toggle functionality and removed unused inputs for cleaner interface.
+
+// R1.0 - R1.27: FOUNDATION & CORE FEATURES
+// =========================================
+// Evolved from basic swing detection to comprehensive swing trading system. Implemented 
+// 7-bar lookback pivot detection, dynamic color-changing breakout lines, persistent 
+// profit target/stop loss lines, risk-reward table with live calculations, success 
+// rate tracking, and partial profit-taking logic.
 
 // FUTURE REVISIONS (R2.0+)
 // ========================
-// All future updates will be numbered R2.0 and above, with consolidated change descriptions 
-// in paragraph format for better readability and maintenance.
+// All future updates will be numbered R2.0 and above, with consolidated change 
+// descriptions in paragraph format.
 
 // =============================================================================
-// CURRENT VERSION: R1.41 | NEXT VERSION: R2.0
+// CURRENT VERSION: R1.50 | NEXT VERSION: R2.0
 // ============================================================================= 
 
 
@@ -189,7 +161,7 @@ show_risk_reward = input.bool(true, "Show Risk-Reward Analysis")
 show_table = input.bool(true, "Show Table")
 show_stop_targets = input.bool(true, "Show Stop Loss & Take Profit")
 light_table_theme = input.bool(false, "Light Table Theme (Toggle for Dark)")
-show_debug_symbols = input.bool(false, "Show Debug Symbols")
+
 
 
 // Technical Indicators Inputs
@@ -198,6 +170,11 @@ enable_volume_filter = input.bool(true, "Enable Volume Filter for Breakouts")
 volume_filter_threshold = input.float(0.0, "Volume Filter Threshold (Z-Score)", minval=-2.0, maxval=2.0, step=0.1, tooltip="Only take breakouts when volume z-score is above this threshold. 0.0 = average volume, 1.0 = high volume, -1.0 = low volume")
 show_rsi = input.bool(true, "Show RSI in Table")
 rsi_length = input.int(14, "RSI Length", minval=1, maxval=50)
+
+// ATR Settings
+atr_length = input.int(14, "ATR Length", minval=1, maxval=50, tooltip="Period for ATR calculation. Default: 14")
+atr_stop_multiplier = input.float(1.0, "ATR Stop Loss Multiplier", minval=0.5, maxval=3.0, step=0.1, tooltip="Multiplier for stop loss distance. Default: 1.0 (1 ATR)")
+atr_target_multiplier = input.float(2.0, "ATR Profit Target Multiplier", minval=1.0, maxval=5.0, step=0.1, tooltip="Multiplier for profit target distance. Default: 2.0 (2 ATR)")
 
 
 // Profit Maximization Inputs
@@ -302,6 +279,12 @@ var float alert_fired_entry_price = na
 var float alert_fired_take_profit = na
 var float alert_fired_stop_loss = na
 
+// Persistent Display Variables for HUD
+var string last_display_signal = na
+var float last_display_entry = na
+var float last_display_take_profit = na
+var float last_display_stop_loss = na
+
 
 // Detect swing high
 is_swing_high = ta.pivothigh(high, lookback, lookback)
@@ -398,11 +381,12 @@ if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
     // Long setup: Price breaks above swing high (breakout) - only on new breach
     if new_long_breach
         entry_price := most_recent_high  // Use the breakout level as entry
-        stop_loss := most_recent_low  // Use opposite breach line (swing low) as stop loss
+        // Use ATR-based stop loss and profit target
+        atr_value = ta.atr(atr_length)
+        stop_loss := entry_price - (atr_value * atr_stop_multiplier)  // ATR-based stop loss
         risk_amount := entry_price - stop_loss
-        // Set profit target for 1:1 ratio based on opposite breach line (swing low)
-        opposite_risk := entry_price - most_recent_low
-        take_profit := entry_price + opposite_risk
+        // Set profit target using ATR-based calculation
+        take_profit := entry_price + (atr_value * atr_target_multiplier)  // ATR-based profit target
         
         // Only calculate R:R ratio if risk_amount is valid and not zero
         if risk_amount > 0
@@ -411,6 +395,12 @@ if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
             risk_reward_ratio := na
             
         trade_signal := "LONG"
+        
+        // Update persistent display variables for long signal
+        last_display_signal := "LONG"
+        last_display_entry := entry_price
+        last_display_take_profit := take_profit
+        last_display_stop_loss := stop_loss
         
         // Initialize max tracking for long trades
         max_pips_beyond_breakout := entry_price
@@ -432,11 +422,12 @@ if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
     // Short setup: Price breaks below swing low (breakdown) - only on new breach
     else if new_short_breach
         entry_price := most_recent_low  // Use the breakout level as entry
-        stop_loss := most_recent_high  // Use opposite breach line (swing high) as stop loss
+        // Use ATR-based stop loss and profit target
+        atr_value = ta.atr(atr_length)
+        stop_loss := entry_price + (atr_value * atr_stop_multiplier)  // ATR-based stop loss
         risk_amount := stop_loss - entry_price
-        // Set profit target for 1:1 ratio based on opposite breach line (swing high)
-        opposite_risk := most_recent_high - entry_price
-        take_profit := entry_price - opposite_risk
+        // Set profit target using ATR-based calculation
+        take_profit := entry_price - (atr_value * atr_target_multiplier)  // ATR-based profit target
         
         // Only calculate R:R ratio if risk_amount is valid and not zero
         if risk_amount > 0
@@ -445,6 +436,12 @@ if show_risk_reward and not na(most_recent_high) and not na(most_recent_low)
             risk_reward_ratio := na
             
         trade_signal := "SHORT"
+        
+        // Update persistent display variables for short signal
+        last_display_signal := "SHORT"
+        last_display_entry := entry_price
+        last_display_take_profit := take_profit
+        last_display_stop_loss := stop_loss
         
         // Initialize max tracking for short trades
         max_pips_beyond_breakout := entry_price
@@ -519,9 +516,9 @@ if current_trade_active and not na(last_entry_price) and not na(persistent_parti
             
             // Change stop loss line color to indicate trailing stop is active
             if show_risk_reward and show_stop_targets and not na(stop_loss_line)
-                line.set_color(stop_loss_line, color.rgb(255, 165, 0))  // Orange color for trailing stop
-                label.set_color(sl_label, color.rgb(255, 165, 0))
-                label.set_text(sl_label, "TS")  // Change label to "TS" for Trailing Stop
+                line.set_color(stop_loss_line, color.orange)  // Orange color for trailing stop
+                label.set_color(sl_label, color.orange)
+                label.set_text(sl_label, "TS " + str.tostring(trailing_stop_level, "#.#####"))  // Change label to "TS" with price for Trailing Stop
     
     // Update trailing stop level
     if trailing_activated and not na(trailing_stop_level)
@@ -552,7 +549,9 @@ if not na(swing_high) and show_labels
     line_color = high_breached ? color.lime : color.teal
     high_line := line.new(swing_high_bar, swing_high, bar_index + 20, swing_high, color=line_color, width=2, style=line.style_solid)
     label.delete(high_label)
-    high_label := label.new(bar_index + 5, swing_high, trend_status, color=line_color, style=label.style_label_left, textcolor=color.white, size=size.large)
+    // Add price to the label text
+    label_text = trend_status + " " + str.tostring(swing_high, "#.#####")
+    high_label := label.new(bar_index + 5, swing_high, label_text, color=line_color, style=label.style_label_left, textcolor=color.white, size=size.normal)
 
 if not na(swing_low) and show_labels
     line.delete(low_line)
@@ -560,7 +559,9 @@ if not na(swing_low) and show_labels
     line_color = low_breached ? color.rgb(255, 20, 147) : color.gray
     low_line := line.new(swing_low_bar, swing_low, bar_index + 20, swing_low, color=line_color, width=2, style=line.style_solid)
     label.delete(low_label)
-    low_label := label.new(bar_index + 5, swing_low, trend_status, color=line_color, style=label.style_label_left, textcolor=color.white, size=size.large)
+    // Add price to the label text
+    label_text = trend_status + " " + str.tostring(swing_low, "#.#####")
+    low_label := label.new(bar_index + 5, swing_low, label_text, color=line_color, style=label.style_label_left, textcolor=color.white, size=size.normal)
 
 
 // Draw trend lines
@@ -600,17 +601,19 @@ if show_risk_reward and show_stop_targets and new_setup_triggered
     // Create new persistent profit target line with fixed positions
     profit_target_line := line.new(setup_bar - 10, take_profit, setup_bar + 50, take_profit, color=color.lime, width=2, style=line.style_dashed)
     
-    // Add "PT" label to the profit target line
+    // Add "PT" label to the profit target line with price
     label.delete(pt_label)
-    pt_label := label.new(setup_bar + 55, take_profit, "PT", color=color.lime, style=label.style_label_left, textcolor=color.white, size=size.small)
+    pt_label_text = "PT " + str.tostring(take_profit, "#.#####")
+    pt_label := label.new(setup_bar + 55, take_profit, pt_label_text, color=color.rgb(0, 200, 0), style=label.style_label_left, textcolor=color.white, size=size.normal)
     
     // Create stop loss line with fixed positions
     line.delete(stop_loss_line)
-    stop_loss_line := line.new(setup_bar - 10, stop_loss, setup_bar + 50, stop_loss, color=color.rgb(255, 20, 147), width=2, style=line.style_dashed)
+    stop_loss_line := line.new(setup_bar - 10, stop_loss, setup_bar + 50, stop_loss, color=color.rgb(220, 0, 0), width=2, style=line.style_dashed)
     
-    // Add "SL" label to the stop loss line
+    // Add "SL" label to the stop loss line with price
     label.delete(sl_label)
-    sl_label := label.new(setup_bar + 55, stop_loss, "SL", color=color.rgb(255, 20, 147), style=label.style_label_left, textcolor=color.white, size=size.small)
+    sl_label_text = "SL " + str.tostring(stop_loss, "#.#####")
+    sl_label := label.new(setup_bar + 55, stop_loss, sl_label_text, color=color.rgb(220, 0, 0), style=label.style_label_left, textcolor=color.white, size=size.normal)
     
     // Reset the flag after lines are created
     new_setup_triggered := false
@@ -622,7 +625,14 @@ if show_risk_reward and show_stop_targets and not new_setup_triggered and not na
     bool profit_target_hit = (last_trade_signal == "LONG" and close >= last_take_profit) or (last_trade_signal == "SHORT" and close <= last_take_profit)
     bool trailing_stop_hit = trailing_activated and not na(trailing_stop_level) and ((last_trade_signal == "LONG" and close <= trailing_stop_level) or (last_trade_signal == "SHORT" and close >= trailing_stop_level))
     
-    if profit_target_hit or trailing_stop_hit
+    // Check if price has crossed back over the original swing line (invalidates the breakout)
+    bool swing_line_crossed_back = false
+    if last_trade_signal == "LONG" and not na(most_recent_high)
+        swing_line_crossed_back := close < most_recent_high and close[1] >= most_recent_high
+    else if last_trade_signal == "SHORT" and not na(most_recent_low)
+        swing_line_crossed_back := close > most_recent_low and close[1] <= most_recent_low
+    
+    if profit_target_hit or trailing_stop_hit or swing_line_crossed_back
         // Price has hit the profit target or trailing stop, remove the line and label
         line.delete(profit_target_line)
         label.delete(pt_label)
@@ -685,60 +695,79 @@ if show_risk_reward and show_table
     color strategy_text = light_table_theme ? color.rgb(150, 150, 0) : color.rgb(255, 255, 150)
     color strategy_bg = light_table_theme ? color.rgb(255, 255, 220) : color.rgb(50, 50, 0)
     
-    var table rr_table = table.new(position.top_right, 2, show_volume ? (enable_volume_filter ? (show_rsi ? 7 : 6) : (show_rsi ? 6 : 5)) : (show_rsi ? 5 : 4), bgcolor=table_bg, border_width=2, border_color=color.rgb(100, 100, 150))
+    var table rr_table = table.new(position.top_right, 2, show_volume ? (enable_volume_filter ? (show_rsi ? 8 : 7) : (show_rsi ? 7 : 6)) : (show_rsi ? 6 : 5), bgcolor=table_bg, border_width=2, border_color=color.rgb(100, 100, 150))
     
     if barstate.islast
+        // Spacer row for top margin
+        table.cell(rr_table, 0, 0, "", text_color=color.white, bgcolor=color.rgb(20, 20, 30), text_size=size.small)
+        table.cell(rr_table, 1, 0, "", text_color=color.white, bgcolor=color.rgb(20, 20, 30), text_size=size.small)
+        
         // Header with gradient effect and emojis
-        table.cell(rr_table, 0, 0, "🔥 HEADS UP DISPLAY", text_color=color.white, bgcolor=color.rgb(60, 20, 80), text_size=size.large)
-        table.cell(rr_table, 1, 0, "HUD 🔥", text_color=color.white, bgcolor=color.rgb(60, 20, 80), text_size=size.large)
+        table.cell(rr_table, 0, 1, "🔥 HEADS UP DISPLAY", text_color=color.white, bgcolor=color.rgb(60, 20, 80), text_size=size.large)
+        table.cell(rr_table, 1, 1, "HUD 🔥", text_color=color.white, bgcolor=color.rgb(60, 20, 80), text_size=size.large)
         
-        // Signal & R:R Ratio combined
+        // Signal & R:R Ratio combined - Persist until new signal
         float current_rr = na
-        if not na(alert_fired_signal) and not na(alert_fired_entry_price) and not na(alert_fired_take_profit)
-            if alert_fired_signal == "LONG"
-                current_rr := (alert_fired_take_profit - alert_fired_entry_price) / (alert_fired_entry_price - alert_fired_stop_loss)
-            else if alert_fired_signal == "SHORT"
-                current_rr := (alert_fired_entry_price - alert_fired_take_profit) / (alert_fired_stop_loss - alert_fired_entry_price)
+        string signal_rr_text = "na"
         
-        string signal_rr_text = not na(alert_fired_signal) ? alert_fired_signal : "na"
+        // Use alert_fired values if available, otherwise use persistent display values
+        string display_signal = not na(alert_fired_signal) ? alert_fired_signal : last_display_signal
+        float display_entry = not na(alert_fired_entry_price) ? alert_fired_entry_price : last_display_entry
+        float display_take_profit = not na(alert_fired_take_profit) ? alert_fired_take_profit : last_display_take_profit
+        float display_stop_loss = not na(alert_fired_stop_loss) ? alert_fired_stop_loss : last_display_stop_loss
+        
+        if not na(display_signal) and not na(display_entry) and not na(display_take_profit) and not na(display_stop_loss)
+            if display_signal == "LONG"
+                current_rr := (display_take_profit - display_entry) / (display_entry - display_stop_loss)
+            else if display_signal == "SHORT"
+                current_rr := (display_entry - display_take_profit) / (display_stop_loss - display_entry)
+        
+        signal_rr_text := not na(display_signal) ? display_signal : "na"
         if not na(current_rr) and current_rr > 0
             signal_rr_text := signal_rr_text + " | 1:" + str.tostring(current_rr, "#.##")
         
-        table.cell(rr_table, 0, 1, "📈 Signal & R:R", text_color=header_text, bgcolor=header_bg)
-        table.cell(rr_table, 1, 1, signal_rr_text, text_color=alert_fired_signal == "LONG" ? success_text : warning_text, bgcolor=alert_fired_signal == "LONG" ? success_bg : warning_bg)
+        table.cell(rr_table, 0, 2, "📈 Signal & R:R", text_color=header_text, bgcolor=header_bg)
+        table.cell(rr_table, 1, 2, signal_rr_text, text_color=display_signal == "LONG" ? success_text : warning_text, bgcolor=display_signal == "LONG" ? success_bg : warning_bg)
         
 
         
-        // Entry & Pip Distance combined
+        // Entry & Pip Distance combined - Persist until new signal
         float pip_distance = na
-        if not na(alert_fired_signal) and not na(alert_fired_entry_price) and not na(alert_fired_take_profit)
-            if alert_fired_signal == "LONG"
-                pip_distance := (alert_fired_take_profit - alert_fired_entry_price) * 10000  // Convert to pips (4 decimal places)
-            else if alert_fired_signal == "SHORT"
-                pip_distance := (alert_fired_entry_price - alert_fired_take_profit) * 10000  // Convert to pips (4 decimal places)
+        string entry_distance_text = "na"
         
-        string entry_distance_text = not na(alert_fired_entry_price) ? str.tostring(alert_fired_entry_price, "#.#####") : "na"
+        // Use display values from signal section for consistency
+        if not na(display_signal) and not na(display_entry) and not na(display_take_profit)
+            if display_signal == "LONG"
+                pip_distance := (display_take_profit - display_entry) * 10000  // Convert to pips (4 decimal places)
+            else if display_signal == "SHORT"
+                pip_distance := (display_entry - display_take_profit) * 10000  // Convert to pips (4 decimal places)
+        
+        entry_distance_text := not na(display_entry) ? str.tostring(display_entry, "#.#####") : "na"
         if not na(pip_distance)
             entry_distance_text := entry_distance_text + " | " + str.tostring(pip_distance, "#") + "p"
         
-        table.cell(rr_table, 0, 2, "🎯 Entry & Distance", text_color=header_text, bgcolor=header_bg)
-        table.cell(rr_table, 1, 2, entry_distance_text, text_color=info_text, bgcolor=info_bg)
+        // Add ATR value to the display
+        float current_atr = ta.atr(atr_length)
+        entry_distance_text := entry_distance_text + " | ATR:" + (not na(current_atr) ? str.tostring(current_atr * 10000, "#") : "na") + "p"
+        
+        table.cell(rr_table, 0, 3, "🎯 Entry & Distance", text_color=header_text, bgcolor=header_bg)
+        table.cell(rr_table, 1, 3, entry_distance_text, text_color=info_text, bgcolor=info_bg)
         
         // Success Rate calculation - now accounts for partial profit taking
         float full_success_rate = total_breaches > 0 ? (successful_trades / total_breaches) * 100 : 0.0
         float partial_success_rate = total_breaches > 0 ? (partial_successes / total_breaches) * 100 : 0.0
         float overall_success_rate = total_breaches > 0 ? ((successful_trades + partial_successes) / total_breaches) * 100 : 0.0
         
-        table.cell(rr_table, 0, 3, "🎯 Success Rate/Edge", text_color=header_text, bgcolor=header_bg)
-        table.cell(rr_table, 1, 3, str.tostring(overall_success_rate, "#.#") + "% (" + str.tostring(successful_trades + partial_successes) + "/" + str.tostring(total_breaches) + ")", text_color=overall_success_rate >= 50.0 ? success_text : warning_text, bgcolor=overall_success_rate >= 50.0 ? success_bg : warning_bg)
+        table.cell(rr_table, 0, 4, "🎯 Success Rate/Edge", text_color=header_text, bgcolor=header_bg)
+        table.cell(rr_table, 1, 4, str.tostring(overall_success_rate, "#.#") + "% (" + str.tostring(successful_trades + partial_successes) + "/" + str.tostring(total_breaches) + ")", text_color=overall_success_rate >= 50.0 ? success_text : warning_text, bgcolor=overall_success_rate >= 50.0 ? success_bg : warning_bg)
 
         // Position & PM Status combined
         string position_pm_text = not na(remaining_position_size) ? str.tostring(remaining_position_size, "#.##") + "%" : "na"
         if not na(partial_taken)
             position_pm_text := position_pm_text + " | P:" + (partial_taken ? "Y" : "N") + " T:" + (trailing_activated ? "Y" : "N")
         
-        table.cell(rr_table, 0, 4, "📊 Position & PM", text_color=header_text, bgcolor=header_bg)
-        table.cell(rr_table, 1, 4, position_pm_text, text_color=info_text, bgcolor=info_bg)
+        table.cell(rr_table, 0, 5, "📊 Position & PM", text_color=header_text, bgcolor=header_bg)
+        table.cell(rr_table, 1, 5, position_pm_text, text_color=info_text, bgcolor=info_bg)
 
         // Volume & Filter combined
         if show_volume
@@ -769,8 +798,8 @@ if show_risk_reward and show_table
                 volume_filter_text := volume_filter_text + " | " + filter_status + " [" + str.tostring(volume_filter_threshold, "#.#") + "]"
                 volume_color := volume_filter_active ? success_text : warning_text
             
-            table.cell(rr_table, 0, 5, "📈 Volume & Filter", text_color=header_text, bgcolor=header_bg)
-            table.cell(rr_table, 1, 5, volume_filter_text, text_color=volume_color, bgcolor=info_bg)
+            table.cell(rr_table, 0, 6, "📈 Volume & Filter", text_color=header_text, bgcolor=header_bg)
+            table.cell(rr_table, 1, 6, volume_filter_text, text_color=volume_color, bgcolor=info_bg)
 
         // RSI Information
         if show_rsi
@@ -814,7 +843,7 @@ if show_risk_reward and show_table
                 else
                     rsi_color := info_text  // Orange for neutral conditions
             
-            int rsi_row = show_volume ? (enable_volume_filter ? 6 : 5) : 4
+            int rsi_row = show_volume ? (enable_volume_filter ? 7 : 6) : 5
             table.cell(rr_table, 0, rsi_row, "📊 RSI & Filter", text_color=header_text, bgcolor=header_bg)
             table.cell(rr_table, 1, rsi_row, rsi_text, text_color=rsi_color, bgcolor=info_bg)
 
@@ -837,10 +866,16 @@ if not na(most_recent_high) and close > most_recent_high and close[1] <= most_re
         // Set alert-fired variables for table synchronization
         alert_fired_signal := "LONG"
         alert_fired_entry_price := most_recent_high
-        alert_fired_take_profit := most_recent_high + (most_recent_high - most_recent_low)
-        alert_fired_stop_loss := most_recent_low
+        alert_fired_take_profit := most_recent_high + (ta.atr(atr_length) * atr_target_multiplier)
+        alert_fired_stop_loss := most_recent_high - (ta.atr(atr_length) * atr_stop_multiplier)
         
-        alert("BULLISH BREAKOUT on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (low): " + str.tostring(most_recent_low, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed above swing high" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : "") + (show_rsi ? " | RSI: " + str.tostring(rsi_value, "#.#") : ""), alert.freq_once_per_bar)
+        // Store persistent display values
+        last_display_signal := "LONG"
+        last_display_entry := most_recent_high
+        last_display_take_profit := most_recent_high + (ta.atr(atr_length) * atr_target_multiplier)
+        last_display_stop_loss := most_recent_high - (ta.atr(atr_length) * atr_stop_multiplier)
+        
+        alert("BULLISH BREAKOUT on " + syminfo.ticker + " (" + timeframe.period + ") at price " + str.tostring(close, "#.#####") + " | Opposite swing (low): " + str.tostring(most_recent_low, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed above swing high" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : "") + (show_rsi ? " | RSI: " + str.tostring(rsi_value, "#.#") : ""), alert.freq_once_per_bar)
 
 
 // Alert when swing low line changes from gray to red (bearish breakdown)
@@ -860,31 +895,84 @@ if not na(most_recent_low) and close < most_recent_low and close[1] >= most_rece
         // Set alert-fired variables for table synchronization
         alert_fired_signal := "SHORT"
         alert_fired_entry_price := most_recent_low
-        alert_fired_take_profit := most_recent_low - (most_recent_high - most_recent_low)
-        alert_fired_stop_loss := most_recent_high
+        alert_fired_take_profit := most_recent_low - (ta.atr(atr_length) * atr_target_multiplier)
+        alert_fired_stop_loss := most_recent_low + (ta.atr(atr_length) * atr_stop_multiplier)
         
-        alert("BEARISH BREAKDOWN on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " | Opposite swing (high): " + str.tostring(most_recent_high, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed below swing low" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : "") + (show_rsi ? " | RSI: " + str.tostring(rsi_value, "#.#") : ""), alert.freq_once_per_bar)
+        // Store persistent display values
+        last_display_signal := "SHORT"
+        last_display_entry := most_recent_low
+        last_display_take_profit := most_recent_low - (ta.atr(atr_length) * atr_target_multiplier)
+        last_display_stop_loss := most_recent_low + (ta.atr(atr_length) * atr_stop_multiplier)
+        
+        alert("BEARISH BREAKDOWN on " + syminfo.ticker + " (" + timeframe.period + ") at price " + str.tostring(close, "#.#####") + " | Opposite swing (high): " + str.tostring(most_recent_high, "#.#####") + " (suggested stop loss) | Profit target: " + str.tostring(take_profit, "#.#####") + " - Price closed below swing low" + (enable_volume_filter ? " | Volume Z-Score: " + str.tostring(alert_volume_z_score, "#.##") : "") + (show_rsi ? " | RSI: " + str.tostring(rsi_value, "#.#") : ""), alert.freq_once_per_bar)
 
 
 // Trailing Stop Alert
 if enable_trailing_stop and trailing_activated and not trailing_activated[1]
-    alert("TRAILING STOP ACTIVATED on " + syminfo.ticker + " at price " + str.tostring(close, "#.#####") + " - Stop loss moved to " + str.tostring(trailing_stop_level, "#.#####") + ". According to the indicator's strategy, this is a suggested point to close 50% (half) of your position.", alert.freq_once_per_bar)
+    alert("TRAILING STOP ACTIVATED on " + syminfo.ticker + " (" + timeframe.period + ") at price " + str.tostring(close, "#.#####") + " - Stop loss moved to " + str.tostring(trailing_stop_level, "#.#####") + ". According to the indicator's strategy, this is a suggested point to close 50% (half) of your position.", alert.freq_once_per_bar)
 
 
 
 
 
-// RSI Overbought/Oversold Visual Indicators
-// Overbought dot (red)
-plotshape(show_rsi and not na(rsi_value) and rsi_value >= 70, title="RSI Overbought", location=location.abovebar, color=color.red, style=shape.circle, size=size.tiny)
-// Oversold dot (green)
-plotshape(show_rsi and not na(rsi_value) and rsi_value <= 30, title="RSI Oversold", location=location.belowbar, color=color.green, style=shape.circle, size=size.tiny)
+// RSI Color by Extremes - Option 1 Implementation
+// Color the RSI line based on extreme values for easy identification
+rsi_line_color = show_rsi and not na(rsi_value) ? 
+                 rsi_value >= 70 ? color.red :
+                 rsi_value <= 30 ? color.green :
+                 rsi_value > 50 ? color.lime : color.orange : na
+
+// RSI Series Detection - Option 2 Implementation
+// Track consecutive dots and use different colors for first vs last dot in series
+var int consecutive_overbought = 0
+var int consecutive_oversold = 0
+
+// Count consecutive overbought dots
+if show_rsi and not na(rsi_value) and rsi_value >= 70
+    consecutive_overbought := consecutive_overbought + 1
+else
+    consecutive_overbought := 0
+
+// Track previous overbought state to detect series end
+var bool was_overbought = false
+bool is_overbought = show_rsi and not na(rsi_value) and rsi_value >= 70
+bool overbought_series_ended = was_overbought and not is_overbought
+was_overbought := is_overbought
+
+// Count consecutive oversold dots  
+if show_rsi and not na(rsi_value) and rsi_value <= 30
+    consecutive_oversold := consecutive_oversold + 1
+else
+    consecutive_oversold := 0
+
+// Track previous oversold state to detect series end
+var bool was_oversold = false
+bool is_oversold = show_rsi and not na(rsi_value) and rsi_value <= 30
+bool oversold_series_ended = was_oversold and not is_oversold
+was_oversold := is_oversold
+
+// Plot dots with different colors for series vs last dot
+plotshape(show_rsi and not na(rsi_value) and rsi_value >= 70 and consecutive_overbought > 1, title="Overbought Series", location=location.abovebar, color=color.red, style=shape.circle, size=size.tiny)
+plotshape(overbought_series_ended, title="Last Overbought", location=location.abovebar, color=color.yellow, style=shape.circle, size=size.small)
+plotshape(show_rsi and not na(rsi_value) and rsi_value <= 30 and consecutive_oversold > 1, title="Oversold Series", location=location.belowbar, color=color.green, style=shape.circle, size=size.tiny)
+plotshape(oversold_series_ended, title="Last Oversold", location=location.belowbar, color=color.orange, style=shape.circle, size=size.small)
 
 
-// Debug Visual Indicators - Show only on current bar (toggleable)
-plotshape(show_debug_symbols and barstate.islast and not na(most_recent_high) and close > most_recent_high, title="Close > High", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.tiny)
-plotshape(show_debug_symbols and barstate.islast and not na(most_recent_high) and close[1] <= most_recent_high, title="Close[1] <= High", location=location.abovebar, color=color.orange, style=shape.triangledown, size=size.tiny)
-plotshape(show_debug_symbols and barstate.islast and not na(most_recent_high) and close > most_recent_high and close[1] <= most_recent_high, title="BREAKOUT DETECTED", location=location.abovebar, color=color.red, style=shape.diamond, size=size.small)
+// RSI Large Dot Alerts
+// Alert for yellow dot (Last Overbought) - RSI overbought series ended
+if show_rsi and overbought_series_ended
+    alert("RSI OVERBOUGHT SERIES ENDED on " + syminfo.ticker + " (" + timeframe.period + ") at price " + str.tostring(close, "#.#####") + " | RSI: " + str.tostring(rsi_value, "#.#") + " - Yellow dot indicates potential reversal from overbought conditions. Consider looking for short opportunities or closing long positions.", alert.freq_once_per_bar)
+
+// Alert for orange dot (Last Oversold) - RSI oversold series ended  
+if show_rsi and oversold_series_ended
+    alert("RSI OVERSOLD SERIES ENDED on " + syminfo.ticker + " (" + timeframe.period + ") at price " + str.tostring(close, "#.#####") + " | RSI: " + str.tostring(rsi_value, "#.#") + " - Orange dot indicates potential reversal from oversold conditions. Consider looking for long opportunities or closing short positions.", alert.freq_once_per_bar)
+
+
+
+
+
+
+
 
 
 
