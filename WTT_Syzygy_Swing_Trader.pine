@@ -6,6 +6,16 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1.49", overlay=true)
 // WTT SYZYGY SWING TRADER - REVISION HISTORY
 // =============================================================================
 
+// R1.51: PROFIT TARGET HIT VISUAL DOCUMENTATION SYSTEM
+// ====================================================
+// Implemented comprehensive profit target hit documentation system with color-coded 
+// visual elements that only display when profit targets are actually reached. Added 
+// horizontal lines, information labels, and cleanup logic to show only the most 
+// current profit target hit. Color-coded system uses bright green for LONG profit 
+// targets and magenta for SHORT profit targets with black text for optimal readability. 
+// System only documents successful profit target hits, not failed trades that hit 
+// stop loss first, maintaining clean chart appearance.
+
 // R1.50: SWING LINE CROSS-BACK INVALIDATION & ENHANCED COLOR SCHEME
 // ================================================================
 // Implemented fourth condition for profit target and stop loss line removal when 
@@ -146,7 +156,7 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1.49", overlay=true)
 // descriptions in paragraph format.
 
 // =============================================================================
-// CURRENT VERSION: R1.50 | NEXT VERSION: R2.0
+// CURRENT VERSION: R1.51 | NEXT VERSION: R2.0
 // ============================================================================= 
 
 
@@ -247,6 +257,16 @@ var int setup_bar = na
 
 // Variables to track persistent partial exit level
 var float persistent_partial_exit_level = na
+
+// Variables to track profit target hits for visual documentation
+var bool profit_target_hit_this_bar = false
+var int profit_target_hit_bar = na
+var float profit_target_hit_price = na
+var string profit_target_hit_signal = na
+
+// Variables to track profit target hit visual elements for cleanup
+var line profit_target_hit_line = na
+var label profit_target_hit_label = na
 
 
 // Strategy instructions label
@@ -632,6 +652,20 @@ if show_risk_reward and show_stop_targets and not new_setup_triggered and not na
     else if last_trade_signal == "SHORT" and not na(most_recent_low)
         swing_line_crossed_back := close > most_recent_low and close[1] <= most_recent_low
     
+    // Track profit target hits for visual documentation
+    if profit_target_hit and not profit_target_hit_this_bar
+        // Clean up previous profit target hit visual elements
+        line.delete(profit_target_hit_line)
+        label.delete(profit_target_hit_label)
+        
+        profit_target_hit_this_bar := true
+        profit_target_hit_bar := bar_index
+        profit_target_hit_price := close
+        profit_target_hit_signal := last_trade_signal
+    else if profit_target_hit_this_bar and bar_index > profit_target_hit_bar
+        // Reset the flag after the bar where the hit occurred
+        profit_target_hit_this_bar := false
+    
     if profit_target_hit or trailing_stop_hit or swing_line_crossed_back
         // Price has hit the profit target or trailing stop, remove the line and label
         line.delete(profit_target_line)
@@ -968,14 +1002,22 @@ if show_rsi and oversold_series_ended
     alert("RSI OVERSOLD SERIES ENDED on " + syminfo.ticker + " (" + timeframe.period + ") at price " + str.tostring(close, "#.#####") + " | RSI: " + str.tostring(rsi_value, "#.#") + " - Orange dot indicates potential reversal from oversold conditions. Consider looking for long opportunities or closing short positions.", alert.freq_once_per_bar)
 
 
+// =============================================================================
+// PROFIT TARGET HIT VISUAL DOCUMENTATION
+// =============================================================================
 
+// Profit target hit documentation handled in conditional block below
 
-
-
-
-
-
-
- 
-
-
+// Handle profit target hit documentation
+if profit_target_hit_this_bar and not na(profit_target_hit_bar)
+    // Create a horizontal line extending from the hit point
+    line_color = profit_target_hit_signal == "LONG" ? color.rgb(0, 255, 0) : color.rgb(255, 0, 255)
+    profit_target_hit_line := line.new(profit_target_hit_bar, profit_target_hit_price, profit_target_hit_bar + 20, profit_target_hit_price, color=line_color, width=3, style=line.style_solid)
+    
+    // Add a label with profit target hit information
+    label_color = profit_target_hit_signal == "LONG" ? color.rgb(0, 255, 0) : color.rgb(255, 0, 255)
+    text_color = profit_target_hit_signal == "LONG" ? color.black : color.black
+    profit_target_hit_label := label.new(profit_target_hit_bar + 25, profit_target_hit_price, "PROFIT TARGET HIT\n" + profit_target_hit_signal + " @ " + str.tostring(profit_target_hit_price, "#.#####"), color=label_color, style=label.style_label_left, textcolor=text_color, size=size.normal)
+    
+    // Reset the flag after documenting
+    profit_target_hit_this_bar := false

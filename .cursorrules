@@ -97,6 +97,20 @@ if not na(is_swing_high)
     swing_high_bar := bar_index - lookback
 ```
 
+### Plotting Functions (Global Scope Only)
+```pine
+// CORRECT: plotshape in global scope with conditional logic
+plotshape(condition, title="Title", location=location.abovebar, color=color.green, style=shape.triangleup, size=size.normal)
+
+// CORRECT: Complex conditions in variables first
+bool show_plot = condition1 and condition2 and not na(value)
+plotshape(show_plot, title="Title", location=location.abovebar, color=color.green)
+
+// INCORRECT: plotshape inside conditional block
+if condition
+    plotshape(condition, title="Title")  // This will cause scope error
+```
+
 ### Breakout Detection
 ```pine
 // Proper breakout detection with previous bar check
@@ -186,6 +200,14 @@ var table my_table = table.new(position.top_right, columns, rows,
 - Use appropriate line styles
 - Provide clear labels
 - Test on different chart themes
+
+### Syntax & Scope Errors
+- **Function Scope Rules**: `plotshape()`, `plot()`, `plotchar()` must be in global scope
+- **Line Continuation**: Never break function calls across multiple lines in Pine Script
+- **Local vs Global**: Only `line.new()`, `label.new()`, `table.new()` can be used in conditional blocks
+- **File Structure**: Always end files cleanly without extra blank lines or spaces
+- **Variable Declaration**: Use `var` for persistent variables, regular assignment for dynamic ones
+- **Conditional Logic**: Keep complex conditions in variables before using in plotting functions
 
 ## Code Review Checklist
 
