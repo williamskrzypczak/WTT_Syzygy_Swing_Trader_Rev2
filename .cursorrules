@@ -269,3 +269,26 @@ var table my_table = table.new(position.top_right, columns, rows,
 - Use descriptive commit messages with version numbers
 - Test all changes before pushing to remote
 - Maintain backup of working versions
+
+## New Lessons Learned (R1.56 Session)
+
+### Success Rate Calculation Fixes
+- **Problem**: Success rate could exceed 100% due to mismatch between `total_breaches` and `successful_trades`
+- **Solution**: Added `failed_trades` counter and used `(successful_trades / total_completed_trades)` formula
+- **Lesson**: Always validate mathematical formulas for logical consistency
+
+### Profit Factor Implementation
+- **Pattern**: Track `total_profits` and `total_losses` separately for accurate profit factor calculation
+- **Formula**: `profit_factor = total_losses > 0 ? total_profits / total_losses : 0.0`
+- **Display**: Show profit factor alongside success rate in HUD for comprehensive performance monitoring
+
+### Conservative Profit Optimization
+- **Lookback Period**: 6 bars (more signals than 7, less noise than 5)
+- **Volume Filter**: 0.5 threshold (stronger breakouts than 0.0)
+- **Partial Exits**: 0.75 R:R ratio, 60% size (earlier profit taking)
+- **Trailing Stops**: 0.75 activation, 0.3 distance (tighter control)
+
+### Label Size Optimization
+- **Visual Clarity**: Use `size.small` for PT/SL/TS labels to reduce chart clutter
+- **Consistency**: Apply same size across all related labels (persistent and hit documentation)
+- **Readability**: Maintain contrast and visibility while reducing visual interference

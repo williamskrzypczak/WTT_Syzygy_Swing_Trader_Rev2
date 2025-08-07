@@ -1,5 +1,5 @@
 //@version=5
-indicator("WTT_Syzygy_Swing_Trader_Rev1.49", overlay=true)
+indicator("WTT_Syzygy_Swing_Trader_Rev1.56", overlay=true)
 
 
 // =============================================================================
