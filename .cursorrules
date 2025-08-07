@@ -208,6 +208,8 @@ var table my_table = table.new(position.top_right, columns, rows,
 - **File Structure**: Always end files cleanly without extra blank lines or spaces
 - **Variable Declaration**: Use `var` for persistent variables, regular assignment for dynamic ones
 - **Conditional Logic**: Keep complex conditions in variables before using in plotting functions
+- **Variable Name Conflicts**: Always check for existing variable names before declaring new ones
+- **Scope-Specific Variables**: Use different variable names for similar logic in different scopes
 
 ## Code Review Checklist
 
@@ -220,6 +222,8 @@ var table my_table = table.new(position.top_right, columns, rows,
 - [ ] Performance optimized
 - [ ] Documentation complete
 - [ ] Error handling in place
+- [ ] No variable name conflicts
+- [ ] Scope-specific variables properly named
 
 ### Quality Checks
 - [ ] Code follows Pine Script v5 standards
@@ -229,6 +233,8 @@ var table my_table = table.new(position.top_right, columns, rows,
 - [ ] Proper use of `var` for persistent variables
 - [ ] Efficient array operations
 - [ ] Comprehensive error handling
+- [ ] Variable names are unique across all scopes
+- [ ] Similar logic uses different variable names in different contexts
 
 ## Version Control
 

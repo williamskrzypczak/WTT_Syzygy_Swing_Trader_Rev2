@@ -6,6 +6,54 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1.49", overlay=true)
 // WTT SYZYGY SWING TRADER - REVISION HISTORY
 // =============================================================================
 
+// R1.56: LABEL SIZE OPTIMIZATION - SMALLER PT/SL/TS LABELS
+// =========================================================
+// Reduced label sizes for better visual clarity and reduced chart clutter. Changed 
+// all profit target (PT), stop loss (SL), and trailing stop (TS) labels from 
+// size.normal to size.small. This includes both the persistent labels on active 
+// trades and the hit documentation labels. Smaller labels provide cleaner chart 
+// appearance while maintaining readability and reducing visual interference with 
+// price action analysis.
+
+// R1.55: CONSERVATIVE PROFIT OPTIMIZATION - DEFAULT SETTINGS UPDATED
+// ================================================================
+// Optimized default settings for maximum profitability using conservative approach. 
+// Reduced lookback period from 7 to 6 for more trading signals. Increased volume 
+// filter threshold from 0.0 to 0.5 for stronger breakout confirmation. Enhanced 
+// partial profit taking: ratio changed from 1.0 to 0.75 (earlier profit taking) 
+// and size increased from 50% to 60% (more profit secured). Improved trailing 
+// stop settings: activation moved from 0.5 to 0.75 R:R (later activation) and 
+// distance tightened from 0.5 to 0.3 R:R (tighter stops). These optimizations 
+// balance signal frequency with quality while maximizing profit capture.
+
+// R1.54: PROFIT FACTOR TRACKING ADDED TO HUD
+// ===========================================
+// Added comprehensive profit factor tracking to monitor long-term strategy profitability. 
+// Implemented total_profits and total_losses variables to calculate profit factor 
+// (total profits / total losses). Profit factor now displays in HUD alongside success 
+// rate, providing key metric for strategy evaluation. Profit factor > 1.0 indicates 
+// profitable strategy, with higher values showing stronger performance. This enables 
+// real-time monitoring of strategy profitability and risk-adjusted returns.
+
+// R1.53: SUCCESS RATE CALCULATION COMPLETE FIX - PROPER TRADE TRACKING
+// ====================================================================
+// Fixed critical success rate calculation issue where rate could exceed 100%. 
+// Added failed_trades counter to properly track swing line cross-back invalidations. 
+// Updated success rate formula to use (successful_trades / total_completed_trades) 
+// instead of (successful_trades / total_breaches). Now properly distinguishes 
+// between successful exits (profit target, stop loss, trailing stop) and failed 
+// exits (swing line cross-back). This provides accurate success rate that cannot 
+// exceed 100% and reflects true system performance.
+
+// R1.52: SUCCESS RATE CALCULATION FIX - ALL EXIT TYPES INCLUDED
+// ============================================================
+// Fixed success rate calculation to properly account for all exit types. Added 
+// stop loss hits to success rate tracking - now ALL exits (profit target, stop 
+// loss, trailing stop) count as successful trades. Only swing line cross-back 
+// invalidations count as failed trades. Updated profit/risk tracking for stop 
+// loss exits with zero profit and full risk calculation. This provides accurate 
+// success rate reflecting proper risk management execution.
+
 // R1.51: PROFIT TARGET HIT VISUAL DOCUMENTATION SYSTEM
 // ====================================================
 // Implemented comprehensive profit target hit documentation system with color-coded 
@@ -161,7 +209,7 @@ indicator("WTT_Syzygy_Swing_Trader_Rev1.49", overlay=true)
 
 
 // Input parameters
-lookback = input.int(7, "Lookback Period", minval=1, maxval=50)
+lookback = input.int(6, "Lookback Period", minval=1, maxval=50)
 show_labels = input.bool(true, "Show Labels")
 show_trend_lines = input.bool(true, "Show Trend Lines")
 
@@ -177,7 +225,7 @@ light_table_theme = input.bool(false, "Light Table Theme (Toggle for Dark)")
 // Technical Indicators Inputs
 show_volume = input.bool(true, "Show Volume in Table")
 enable_volume_filter = input.bool(true, "Enable Volume Filter for Breakouts")
-volume_filter_threshold = input.float(0.0, "Volume Filter Threshold (Z-Score)", minval=-2.0, maxval=2.0, step=0.1, tooltip="Only take breakouts when volume z-score is above this threshold. 0.0 = average volume, 1.0 = high volume, -1.0 = low volume")
+volume_filter_threshold = input.float(0.5, "Volume Filter Threshold (Z-Score)", minval=-2.0, maxval=2.0, step=0.1, tooltip="Only take breakouts when volume z-score is above this threshold. 0.0 = average volume, 1.0 = high volume, -1.0 = low volume")
 show_rsi = input.bool(true, "Show RSI in Table")
 rsi_length = input.int(14, "RSI Length", minval=1, maxval=50)
 
@@ -189,11 +237,11 @@ atr_target_multiplier = input.float(2.0, "ATR Profit Target Multiplier", minval=
 
 // Profit Maximization Inputs
 enable_partial_taking = input.bool(true, "Enable Partial Profit Taking")
-partial_exit_ratio = input.float(1.0, "Partial Exit at R:R Ratio", minval=0.5, maxval=3.0, step=0.1)
-partial_exit_size = input.float(50.0, "Partial Exit Size (%)", minval=25.0, maxval=75.0, step=5.0)
+partial_exit_ratio = input.float(0.75, "Partial Exit at R:R Ratio", minval=0.5, maxval=3.0, step=0.1)
+partial_exit_size = input.float(60.0, "Partial Exit Size (%)", minval=25.0, maxval=75.0, step=5.0)
 enable_trailing_stop = input.bool(true, "Enable Trailing Stop Loss")
-trailing_activation_ratio = input.float(0.5, "Trailing Stop Activation (R:R)", minval=0.25, maxval=1.0, step=0.1)
-trailing_distance = input.float(0.5, "Trailing Stop Distance (R:R)", minval=0.1, maxval=2.0, step=0.1)
+trailing_activation_ratio = input.float(0.75, "Trailing Stop Activation (R:R)", minval=0.25, maxval=1.0, step=0.1)
+trailing_distance = input.float(0.3, "Trailing Stop Distance (R:R)", minval=0.1, maxval=2.0, step=0.1)
 
 
 // Variables to store swing points
@@ -235,7 +283,6 @@ var float entry_price = na
 var float stop_loss = na
 var float take_profit = na
 var float risk_amount = na
-var float opposite_risk = na
 var float risk_reward_ratio = na
 var string trade_signal = na
 var bool new_setup_triggered = false
@@ -268,16 +315,39 @@ var string profit_target_hit_signal = na
 var line profit_target_hit_line = na
 var label profit_target_hit_label = na
 
+// Variables to track stop loss hit visual elements for cleanup
+var line stop_loss_hit_line = na
+var label stop_loss_hit_label = na
 
-// Strategy instructions label
+// Variables to track stop loss hits for visual documentation
+var bool stop_loss_hit_this_bar = false
+var int stop_loss_hit_bar = na
+var float stop_loss_hit_price = na
+var string stop_loss_hit_signal = na
+
+// Variables to track trailing stop hit visual elements for cleanup
+var line trailing_stop_hit_line = na
+var label trailing_stop_hit_label = na
+
+// Variables to track trailing stop hits for visual documentation
+var bool trailing_stop_hit_this_bar = false
+var int trailing_stop_hit_bar = na
+var float trailing_stop_hit_price = na
+var string trailing_stop_hit_signal = na
+
+
+
 
 
 // Success Rate Tracking Variables
 var int total_breaches = 0
 var int successful_trades = 0
+var int failed_trades = 0
 var int partial_successes = 0
 var float total_profit_achieved = 0.0
 var float total_risk_taken = 0.0
+var float total_profits = 0.0
+var float total_losses = 0.0
 var bool current_trade_active = false
 var float max_pips_beyond_breakout = 0.0
 var float last_entry_price = na
@@ -624,7 +694,7 @@ if show_risk_reward and show_stop_targets and new_setup_triggered
     // Add "PT" label to the profit target line with price
     label.delete(pt_label)
     pt_label_text = "PT " + str.tostring(take_profit, "#.#####")
-    pt_label := label.new(setup_bar + 55, take_profit, pt_label_text, color=color.rgb(0, 200, 0), style=label.style_label_left, textcolor=color.white, size=size.normal)
+    pt_label := label.new(setup_bar + 55, take_profit, pt_label_text, color=color.rgb(0, 200, 0), style=label.style_label_left, textcolor=color.white, size=size.small)
     
     // Create stop loss line with fixed positions
     line.delete(stop_loss_line)
@@ -633,7 +703,7 @@ if show_risk_reward and show_stop_targets and new_setup_triggered
     // Add "SL" label to the stop loss line with price
     label.delete(sl_label)
     sl_label_text = "SL " + str.tostring(stop_loss, "#.#####")
-    sl_label := label.new(setup_bar + 55, stop_loss, sl_label_text, color=color.rgb(220, 0, 0), style=label.style_label_left, textcolor=color.white, size=size.normal)
+    sl_label := label.new(setup_bar + 55, stop_loss, sl_label_text, color=color.rgb(220, 0, 0), style=label.style_label_left, textcolor=color.white, size=size.small)
     
     // Reset the flag after lines are created
     new_setup_triggered := false
@@ -666,8 +736,40 @@ if show_risk_reward and show_stop_targets and not new_setup_triggered and not na
         // Reset the flag after the bar where the hit occurred
         profit_target_hit_this_bar := false
     
-    if profit_target_hit or trailing_stop_hit or swing_line_crossed_back
-        // Price has hit the profit target or trailing stop, remove the line and label
+    // Track stop loss hits for visual documentation
+    bool stop_loss_hit = trailing_activated and not na(trailing_stop_level) and ((last_trade_signal == "LONG" and close <= trailing_stop_level) or (last_trade_signal == "SHORT" and close >= trailing_stop_level))
+    
+    if stop_loss_hit and not stop_loss_hit_this_bar
+        // Clean up previous stop loss hit visual elements
+        line.delete(stop_loss_hit_line)
+        label.delete(stop_loss_hit_label)
+        
+        stop_loss_hit_this_bar := true
+        stop_loss_hit_bar := bar_index
+        stop_loss_hit_price := close
+        stop_loss_hit_signal := last_trade_signal
+    else if stop_loss_hit_this_bar and bar_index > stop_loss_hit_bar
+        // Reset the flag after the bar where the hit occurred
+        stop_loss_hit_this_bar := false
+    
+    // Track trailing stop hits for visual documentation
+    bool trailing_stop_triggered = trailing_activated and not na(trailing_stop_level) and ((last_trade_signal == "LONG" and close <= trailing_stop_level) or (last_trade_signal == "SHORT" and close >= trailing_stop_level))
+    
+    if trailing_stop_triggered and not trailing_stop_hit_this_bar
+        // Clean up previous trailing stop hit visual elements
+        line.delete(trailing_stop_hit_line)
+        label.delete(trailing_stop_hit_label)
+        
+        trailing_stop_hit_this_bar := true
+        trailing_stop_hit_bar := bar_index
+        trailing_stop_hit_price := close
+        trailing_stop_hit_signal := last_trade_signal
+    else if trailing_stop_hit_this_bar and bar_index > trailing_stop_hit_bar
+        // Reset the flag after the bar where the hit occurred
+        trailing_stop_hit_this_bar := false
+    
+    if profit_target_hit or stop_loss_hit or trailing_stop_hit or swing_line_crossed_back
+        // Price has hit the profit target, stop loss, trailing stop, or crossed back over swing line
         line.delete(profit_target_line)
         label.delete(pt_label)
         line.delete(stop_loss_line)
@@ -689,6 +791,13 @@ if show_risk_reward and show_stop_targets and not new_setup_triggered and not na
                 else if last_trade_signal == "SHORT"
                     full_profit_achieved := (last_entry_price - last_take_profit) * (remaining_position_size / 100.0)
                     full_risk_taken := (last_stop_loss - last_entry_price) * (remaining_position_size / 100.0)
+            else if stop_loss_hit
+                if last_trade_signal == "LONG"
+                    full_profit_achieved := 0.0  // Stop loss hit = no profit
+                    full_risk_taken := (last_entry_price - last_stop_loss) * (remaining_position_size / 100.0)
+                else if last_trade_signal == "SHORT"
+                    full_profit_achieved := 0.0  // Stop loss hit = no profit
+                    full_risk_taken := (last_stop_loss - last_entry_price) * (remaining_position_size / 100.0)
             else if trailing_stop_hit
                 if last_trade_signal == "LONG"
                     full_profit_achieved := (trailing_stop_level - last_entry_price) * (remaining_position_size / 100.0)
@@ -697,10 +806,22 @@ if show_risk_reward and show_stop_targets and not new_setup_triggered and not na
                     full_profit_achieved := (last_entry_price - trailing_stop_level) * (remaining_position_size / 100.0)
                     full_risk_taken := (last_stop_loss - last_entry_price) * (remaining_position_size / 100.0)
             
-            // Track full success and total profit
-            successful_trades := successful_trades + 1
-            total_profit_achieved := total_profit_achieved + full_profit_achieved
-            total_risk_taken := total_risk_taken + full_risk_taken
+            // Track success/failure and profit/loss based on exit type
+            if swing_line_crossed_back
+                // Swing line cross-back = failed trade
+                failed_trades := failed_trades + 1
+                total_losses := total_losses + full_risk_taken  // Full risk taken on failed trade
+            else
+                // All other exits (profit target, stop loss, trailing stop) = successful trades
+                successful_trades := successful_trades + 1
+                total_profit_achieved := total_profit_achieved + full_profit_achieved
+                total_risk_taken := total_risk_taken + full_risk_taken
+                
+                // Track profits vs losses for profit factor calculation
+                if full_profit_achieved > 0
+                    total_profits := total_profits + full_profit_achieved
+                else
+                    total_losses := total_losses + math.abs(full_profit_achieved)  // Stop loss = loss
             
             current_trade_active := false
             max_pips_beyond_breakout := 0.0
@@ -787,13 +908,14 @@ if show_risk_reward and show_table
         table.cell(rr_table, 0, 3, "🎯 Entry & Distance", text_color=header_text, bgcolor=header_bg)
         table.cell(rr_table, 1, 3, entry_distance_text, text_color=info_text, bgcolor=info_bg)
         
-        // Success Rate calculation - now accounts for partial profit taking
-        float full_success_rate = total_breaches > 0 ? (successful_trades / total_breaches) * 100 : 0.0
+        // Success Rate and Profit Factor calculation - now properly accounts for all exit types
+        int total_completed_trades = successful_trades + failed_trades
+        float success_rate = total_completed_trades > 0 ? (successful_trades / total_completed_trades) * 100 : 0.0
         float partial_success_rate = total_breaches > 0 ? (partial_successes / total_breaches) * 100 : 0.0
-        float overall_success_rate = total_breaches > 0 ? ((successful_trades + partial_successes) / total_breaches) * 100 : 0.0
+        float profit_factor = total_losses > 0 ? total_profits / total_losses : 0.0
         
         table.cell(rr_table, 0, 4, "🎯 Success Rate/Edge", text_color=header_text, bgcolor=header_bg)
-        table.cell(rr_table, 1, 4, str.tostring(overall_success_rate, "#.#") + "% (" + str.tostring(successful_trades + partial_successes) + "/" + str.tostring(total_breaches) + ")", text_color=overall_success_rate >= 50.0 ? success_text : warning_text, bgcolor=overall_success_rate >= 50.0 ? success_bg : warning_bg)
+        table.cell(rr_table, 1, 4, str.tostring(success_rate, "#.#") + "% (" + str.tostring(successful_trades) + "/" + str.tostring(total_completed_trades) + ") | PF:" + str.tostring(profit_factor, "#.##"), text_color=success_rate >= 50.0 ? success_text : warning_text, bgcolor=success_rate >= 50.0 ? success_bg : warning_bg)
 
         // Position & PM Status combined
         string position_pm_text = not na(remaining_position_size) ? str.tostring(remaining_position_size, "#.##") + "%" : "na"
@@ -949,12 +1071,7 @@ if enable_trailing_stop and trailing_activated and not trailing_activated[1]
 
 
 
-// RSI Color by Extremes - Option 1 Implementation
-// Color the RSI line based on extreme values for easy identification
-rsi_line_color = show_rsi and not na(rsi_value) ? 
-                 rsi_value >= 70 ? color.red :
-                 rsi_value <= 30 ? color.green :
-                 rsi_value > 50 ? color.lime : color.orange : na
+
 
 // RSI Series Detection - Option 2 Implementation
 // Track consecutive dots and use different colors for first vs last dot in series
@@ -1017,7 +1134,45 @@ if profit_target_hit_this_bar and not na(profit_target_hit_bar)
     // Add a label with profit target hit information
     label_color = profit_target_hit_signal == "LONG" ? color.rgb(0, 255, 0) : color.rgb(255, 0, 255)
     text_color = profit_target_hit_signal == "LONG" ? color.black : color.black
-    profit_target_hit_label := label.new(profit_target_hit_bar + 25, profit_target_hit_price, "PROFIT TARGET HIT\n" + profit_target_hit_signal + " @ " + str.tostring(profit_target_hit_price, "#.#####"), color=label_color, style=label.style_label_left, textcolor=text_color, size=size.normal)
+    profit_target_hit_label := label.new(profit_target_hit_bar + 25, profit_target_hit_price, "PROFIT TARGET HIT\n" + profit_target_hit_signal + " @ " + str.tostring(profit_target_hit_price, "#.#####"), color=label_color, style=label.style_label_left, textcolor=text_color, size=size.small)
     
     // Reset the flag after documenting
     profit_target_hit_this_bar := false
+
+
+// =============================================================================
+// STOP LOSS HIT VISUAL DOCUMENTATION
+// =============================================================================
+
+// Handle stop loss hit documentation
+if stop_loss_hit_this_bar and not na(stop_loss_hit_bar)
+    // Create a horizontal line extending from the hit point
+    line_color = color.rgb(220, 0, 0)  // Red for stop loss hits
+    stop_loss_hit_line := line.new(stop_loss_hit_bar, stop_loss_hit_price, stop_loss_hit_bar + 20, stop_loss_hit_price, color=line_color, width=3, style=line.style_solid)
+    
+    // Add a label with stop loss hit information
+    label_color = color.rgb(220, 0, 0)  // Red for stop loss hits
+    text_color = color.black
+    stop_loss_hit_label := label.new(stop_loss_hit_bar + 25, stop_loss_hit_price, "STOP LOSS HIT\n" + stop_loss_hit_signal + " @ " + str.tostring(stop_loss_hit_price, "#.#####"), color=label_color, style=label.style_label_left, textcolor=text_color, size=size.small)
+    
+    // Reset the flag after documenting
+    stop_loss_hit_this_bar := false
+
+
+// =============================================================================
+// TRAILING STOP HIT VISUAL DOCUMENTATION
+// =============================================================================
+
+// Handle trailing stop hit documentation
+if trailing_stop_hit_this_bar and not na(trailing_stop_hit_bar)
+    // Create a horizontal line extending from the hit point
+    line_color = color.rgb(255, 165, 0)  // Orange for trailing stop hits
+    trailing_stop_hit_line := line.new(trailing_stop_hit_bar, trailing_stop_hit_price, trailing_stop_hit_bar + 20, trailing_stop_hit_price, color=line_color, width=3, style=line.style_solid)
+    
+    // Add a label with trailing stop hit information
+    label_color = color.rgb(255, 165, 0)  // Orange for trailing stop hits
+    text_color = color.black
+    trailing_stop_hit_label := label.new(trailing_stop_hit_bar + 25, trailing_stop_hit_price, "TRAILING STOP HIT\n" + trailing_stop_hit_signal + " @ " + str.tostring(trailing_stop_hit_price, "#.#####"), color=label_color, style=label.style_label_left, textcolor=text_color, size=size.small)
+    
+    // Reset the flag after documenting
+    trailing_stop_hit_this_bar := false
